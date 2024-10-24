@@ -2,7 +2,7 @@
   "name": "Tree of Life Member Login",
   "short_name": "Tree of Life Login",
   "description": "Login page for Tree of Life Centre member",
-  "start_url": "./login/index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f8f4f1",
   "theme_color": "#f8f4f1",
@@ -14,5 +14,5 @@
     }
   ],
   "orientation": "portrait",
-  "scope": "./login/"
+  "scope": "./"
 }
