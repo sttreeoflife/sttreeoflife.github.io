@@ -1,0 +1,95 @@
+* {
+    font-family: 'Trebuchet MS', sans-serif;
+}
+
+body {
+    
+    background-color: #f8f4f1;
+    height: 100vh;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    
+    overflow: hidden;
+    touch-action: none;
+
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+
+#inputField {
+    border: none;
+    background-color: transparent;
+    color: #d88e14;
+    text-align: center;
+    letter-spacing: 1.5px;
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 30px;
+}
+
+#inputField:focus {
+    outline: none;
+}
+#inputField::placeholder {
+    font-size: 17px;
+}
+
+
+.keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5vh;
+    margin-bottom: 15px;
+}
+
+.keypad button {
+    width: 70px;
+    height: 70px;
+    border: none;
+    border-radius: 50%;
+    font-size: 30px;
+    text-align: center;
+    color: #333;
+    background-color: #f8f4f1;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.submit-button {
+    width: 255px;
+    padding: 15px;
+    margin: 12px 0;
+    border: none;
+    border-radius: 25px;
+    color: white;
+    font-size:  18px;
+    letter-spacing: 1px;
+    cursor: pointer;
+
+    opacity: 1;
+    transition: 0.3s ease-out;
+
+}
+
+#loginButton {
+    background-color: #f5a623;
+}
+
+#logoutButton {
+    background-color: #588ef9;
+}
+
+.submit-button:disabled {
+    padding: 0px;
+    font-size: 0px;
+    opacity: 0;
+    transition: 0.3s ease-in-out;
+    transform: translate(0px, 10px);
+}

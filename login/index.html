@@ -1,1 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+    <title>Member Login</title>
+    <link rel="stylesheet" href="./styles.css">
+    <link rel="manifest" href="./manifest.json">
+    <script src="./script.js"></script>
+</head>
+<body>
+
+    <iframe name="hidden-confirm" 
+        id="hidden-confirm" 
+        style="display: none;"
+        onload="showConfirmPage(submitStatus)">
+    </iframe>
+
+    <form
+        action="https://docs.google.com/forms/u/0/d/e/1FAIpQLScQ4Op48tOt7FBUmOrguKc454SncmIa5dT-BF0-8uAMJcqgYA/formResponse" 
+        method="POST" 
+        target="hidden-confirm"
+        id="myForm"
+    >
+
+        <input 
+            type="text" 
+            name="entry.1543978301" 
+            id="inputField"
+            placeholder="輸入電話號碼" 
+        >
+
+        <input 
+            type="text" 
+            name="entry.47048589" 
+            id="status"
+            style="display: none;"
+        >
+    
+        <div class="keypad">
+            <button type="button" onclick="addInput(1)">1</button>
+            <button type="button" onclick="addInput(2)">2</button>
+            <button type="button" onclick="addInput(3)">3</button>
+            <button type="button" onclick="addInput(4)">4</button>
+            <button type="button" onclick="addInput(5)">5</button>
+            <button type="button" onclick="addInput(6)">6</button>
+            <button type="button" onclick="addInput(7)">7</button>
+            <button type="button" onclick="addInput(8)">8</button>
+            <button type="button" onclick="addInput(9)">9</button>
+            <button type="button" onclick="addInput(0)" style="grid-column:2">0</button>
+            <button type="button" onclick="clearInput()" style="color: #ccc" >&#10006</button>
+        </div>
+        
+        <button disabled
+            type="button" 
+            class="submit-button" 
+            id="loginButton"
+            onclick="submitForm('LOGIN')"
+        >
+            登入
+        </button>
+
+        <button disabled
+            type="button" 
+            class="submit-button" 
+            id="logoutButton"
+            onclick="submitForm('LOGOUT')"
+        >
+            離開本中心時按此登出
+        </button>
+    </form>
+</body>
+</html>
 

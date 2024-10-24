@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+    <title>submission</title>
+    <link rel="manifest" href="./manifest.json">
+
+    <style>
+
+        * {
+            font-family: 'Trebuchet MS', sans-serif;
+        }
+
+        body {
+            background-color: #f8f4f1;
+            height: 100vh;
+            width: 100vw;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+
+            overflow: hidden;
+            touch-action: none;
+
+        }
+
+        img {
+            width: 500px;
+            max-width: 72vw;
+            height: auto;
+        }
+
+        .display-text {
+            margin: 25px 0;
+            color: #333;
+            text-decoration: none;
+        }
+
+        .button {
+            width: 255px;
+            padding: 15px 0;
+            margin: 12px 0;
+            border: none;
+            border-radius: 25px;
+            background-color: #f5a623;
+            color: white;
+            font-size:  18px;
+            text-decoration: none;
+            text-align: center;
+            letter-spacing: 1px;
+
+            cursor: pointer;
+        }
+
+        #logoutButton {
+            background-color: #588ef9;
+        }
+
+    </style>
+
+    <script>
+
+        // passing parameter
+        var submitStatus, submitPhone;
+
+        // current url parameter
+        var status, phone;
+
+
+
+        window.onload = function() {
+
+            // Create a URL object from the current location
+            const url = new URL(window.location.href);
+            const params = new URLSearchParams(url.search);
+
+            // Get the values of 'phone' and 'time'
+            phone = params.get('phone');
+            status = params.get('status');
+
+            // Display gif
+            const img = document.getElementById('gif');
+            const loginGIF = "https://media1.tenor.com/m/NYLH1ZzFWbUAAAAC/minions.gif";
+            const logoutGIF = "https://media1.tenor.com/m/AGjnoR5dap4AAAAC/despicable-me-minions.gif";
+
+            if (status == "LOGIN") {
+
+                img.src = loginGIF;
+                document.getElementById('logoutButton').style.display = "block";
+
+                // display text
+                const currentTime = new Date();
+                document.getElementById('displayText').innerHTML = `&#x1F464;User: ${phone}`;
+            
+            } else if (status == "LOGOUT") {
+
+                img.src = logoutGIF;
+                document.getElementById('logoutButton').style.display = "none";
+
+            } else {
+
+                img.style.display = "none";
+                document.getElementById('displayText').innerHTML = "噢，似乎出了問題!";
+                document.getElementById('backButton').innerText = "再試一次";
+                document.getElementById('logoutButton').style.display = "none";
+
+            }                                                               
+        }
+        
+
+        function submitForm(status) {
+            const myForm = document.getElementById('myForm');
+            document.getElementById('inputField').value = phone;
+            document.getElementById('status').value = status;
+
+            submitStatus = status;
+            submitPhone = phone;
+
+            myForm.submit();
+        }
+
+        function showConfirmPage() {
+
+            console.log(`status=${submitStatus}&phone=${submitPhone}`);
+            if(submitStatus != null && submitPhone != null) {
+                window.location.href = `submission.html?status=${submitStatus}&phone=${submitPhone}`;
+            }
+        }
+
+        
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then((registration) => {
+                console.log('Service Worker registered with scope:', registration.scope);
+                })
+                .catch((error) => {
+                console.error('Service Worker registration failed:', error);
+                });
+            });
+        }
+
+    </script>
+
+
+</head>
+<body>
+
+    <img id="gif">
+    <div id="displayText" class="display-text">
+    </div>
+
+    <a href="./index.html" class="button" id="backButton">前往登入頁</a>
+    <button
+        class="button" 
+        id="logoutButton"
+        onclick="submitForm('LOGOUT')"
+    > 離開本中心時按此登出
+    </button>
+    
+    
+
+    <iframe name="hidden-confirm" 
+        id="hidden-confirm" 
+        style="display: none;"
+        onload="showConfirmPage()">
+    </iframe>
+
+    <form
+        id="myForm" 
+        action="https://docs.google.com/forms/u/0/d/e/1FAIpQLScQ4Op48tOt7FBUmOrguKc454SncmIa5dT-BF0-8uAMJcqgYA/formResponse" 
+        method="POST" 
+        target="hidden-confirm"
+        style="display: none;"
+    >
+
+        <input 
+            type="text" 
+            name="entry.1543978301" 
+            id="inputField"
+        >
+
+        <input 
+            type="text" 
+            name="entry.47048589" 
+            id="status"
+        >
+    </form>
+</body>
+</html>
