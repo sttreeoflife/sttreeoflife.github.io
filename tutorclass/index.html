@@ -18,16 +18,8 @@
     color: #333;
     padding: 24px;
   }
-  .page { max-width: 980px; margin: 0 auto; }
-  header {
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    color: #fff;
-    border-radius: 12px;
-    padding: 20px 24px;
-    margin-bottom: 20px;
-  }
-  header h1 { font-size: 24px; }
-  header p { margin-top: 6px; opacity: .9; font-size: 14px; }
+  .page { max-width: 1600px; margin: 0 auto; }
+  body { padding-left: 194px; } /* room for the fixed side nav (170px + 24px gutter) */
   .card {
     background: #fff;
     border-radius: 12px;
@@ -46,12 +38,12 @@
     cursor: pointer;
   }
   .toolbar button.nav {
-    background: var(--primary);
-    color: #fff;
-    border-color: var(--primary);
+    background: #fff;
+    color: var(--primary);
+    border: 1px solid var(--primary);
     font-weight: bold;
   }
-  .month-label { font-size: 18px; font-weight: bold; min-width: 120px; text-align: center; }
+  .toolbar button.nav:hover { background: var(--primary); color: #fff; }
   table.cal {
     width: 100%;
     border-collapse: collapse;
@@ -67,20 +59,29 @@
     border: 1px solid #e3e6e0;
     padding: 10px;
     vertical-align: top;
-    min-height: 96px;
+    height: 96px;
     width: 20%;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
   }
+  table.cal { table-layout: fixed; }
   td.empty { background: #fafbf8; }
-  .day-num { font-weight: bold; font-size: 16px; order: -1; margin-bottom: 4px; }
+  /* 今日之前：灰底，唔可以報名 */
+  table.cal td.past { background: #f1f2f0; }
+  table.cal td.past .day-num, table.cal td.past .seats { color: #a6aca4; }
+  table.cal td.past .roster b { color: #9aa398; }
+  /* 日期同剩餘名額同一行：日期左、名額右 */
+  .day-hdr { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; margin-bottom: 6px; }
+  .day-num { font-weight: bold; font-size: 16px; }
+  .day-cb { width: 16px; height: 16px; margin-right: 6px; vertical-align: -3px;
+            cursor: pointer; accent-color: var(--primary); }
+  table.cal td.pickable { cursor: pointer; }
+  table.cal td.disabled { cursor: not-allowed; }
   .today { color: var(--primary); }
-  .seats { margin: 8px 0 4px; font-size: 13px; color: #666; }
-  .seats .full { color: #d32f2f; font-weight: bold; }
-  .bar { height: 8px; background: #e5e5e5; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
-  .bar i { display: block; height: 100%; background: var(--primary); }
+  .seats { font-size: 12px; color: #666; white-space: nowrap; }
+  .seats.full { color: #d32f2f; font-weight: bold; }
+  /* 名額進度：一格代表一位學生，斜身平行四邊形 */
+  .bar { display: flex; gap: 3px; height: 10px; margin: 0 2px 8px; }
+  .bar i { flex: 1 1 0; height: 100%; background: #e8ebe6; transform: skewX(-20deg); border-radius: 1px; }
+  .bar i.on { background: var(--primary); }
   .bar i.warn { background: var(--accent); }
   .bar i.full { background: #d32f2f; }
   label.daypick {
@@ -99,16 +100,21 @@
     border-radius: 8px;
   }
   .btn-primary {
-    background: var(--primary);
-    color: #fff;
-    border: none;
+    background: #fff;
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    font-weight: bold;
     padding: 12px 22px;
     font-size: 16px;
     border-radius: 8px;
     cursor: pointer;
   }
-  .btn-primary:hover { background: var(--primary-dark); }
-  .btn-primary:disabled { background: #aaa; cursor: not-allowed; }
+  .btn-primary:hover { background: var(--primary); color: #fff; }
+  .btn-primary:disabled { background: #fff; color: #aaa; border-color: #ccc; cursor: not-allowed; }
+  /* 報名表：姓名、已揀選天數、提交按鈕同一行 */
+  .form-row { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+  .form-row .field { flex: 0 1 320px; margin-bottom: 0; }
+  .form-row .count-pick { margin-top: 0; line-height: 42px; white-space: nowrap; }
   .result-list { list-style: none; margin-top: 12px; }
   .result-list li {
     padding: 8px 12px;
@@ -121,17 +127,35 @@
   .summary { margin-top: 12px; font-size: 14px; color: #666; }
   .error { color: #d32f2f; margin-top: 10px; font-weight: bold; }
   .ok { color: var(--primary); margin-top: 10px; font-weight: bold; }
-  .count-pick { margin-top: 12px; color: var(--primary-dark); font-weight: bold; }
+  .count-pick { color: var(--primary-dark); font-weight: bold; font-size: 14px; }
+  /* 姓名輸入框內嘅清除交叉 */
+  .input-clear { position: relative; display: block; max-width: 320px; }
+  .input-clear input[type=text] { padding-right: 38px; }
+  .clear-x {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    width: 24px; height: 24px; line-height: 1; padding: 0;
+    border: 0; border-radius: 50%; background: #eceee9; color: #777;
+    font-size: 17px; cursor: pointer;
+  }
+  .clear-x:hover { background: #d9dcd6; color: #333; }
+  .clear-x[hidden] { display: none; }
   .card-hdr { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
   .card-hdr h2 { margin-bottom: 0; }
   .tgl { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; user-select: none; color: #444; }
   .tgl input { width: 18px; height: 18px; cursor: pointer; }
-  .roster { margin-top: 8px; font-size: 12px; color: #555; line-height: 1.6; }
-  .roster b { color: var(--primary); }
+  /* 名單：四個人名一行 */
+  .roster { margin-top: 8px; font-size: 12px; color: #555; line-height: 1.5;
+            display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px 6px; }
+  .roster b { color: var(--primary); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .roster .over { color: #999; }
   table.cal th { cursor: pointer; }
   table.cal th:hover { background: var(--primary-dark); }
   table.cal th .wd-hint { display: block; font-size: 11px; font-weight: normal; opacity: .8; }
+  table.cal th .wd-cb { width: 16px; height: 16px; margin-right: 6px; vertical-align: -2px; cursor: pointer; accent-color: var(--accent); }
+  table.cal th.picked { background: var(--primary-dark); box-shadow: inset 0 -4px 0 var(--accent); }
+  table.cal th.wd-full { opacity: .55; cursor: not-allowed; }
+  table.cal th.wd-full .wd-cb { cursor: not-allowed; }
+  table.cal td.picked { background: #eef7ec; }
   .ds-count { font-size: 13px; color: #666; }
   table.ds { width: 100%; border-collapse: collapse; margin-top: 6px; }
   table.ds th {
@@ -153,66 +177,248 @@
   table.ds td.ts { color: #666; white-space: nowrap; }
   table.ds td.rct { font-family: Menlo, monospace; font-size: 13px; color: var(--primary-dark); white-space: nowrap; }
   .rb-toolbar label { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: bold; margin-right: 14px; }
-  .rb-toolbar select, .rb-toolbar input[type=number] { font-size: 14px; padding: 8px; border: 1px solid #ccc; border-radius: 8px; }
-  .excel-wrap { margin-top: 14px; overflow-x: auto; }
-  table.excel { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 14px; }
-  table.excel th, table.excel td { border: 1px solid #b0b7ab; padding: 8px 12px; vertical-align: top; }
-  table.excel .colletter { background: #eceef4; text-align: center; color: #666; font-size: 12px; }
-  table.excel .title { background: #e8f0e6; text-align: center; font-weight: bold; font-size: 17px; color: var(--primary-dark); }
-  table.excel .label { background: #f4f6f2; font-weight: bold; white-space: nowrap; width: 110px; }
-  table.excel .total { background: #fff8e1; font-weight: bold; }
-  table.excel .num-right { text-align: right; font-family: Menlo, monospace; }
+  .rb-toolbar select, .rb-toolbar input[type=number], .rb-toolbar input[type=month] { font-size: 14px; padding: 8px; border: 1px solid #ccc; border-radius: 8px; }
+  .rb-toolbar input[type=month] { accent-color: var(--primary); }
+  /* 收據：簡單直排，只保留兩條分隔線 */
+  .receipt { max-width: 520px; margin: 16px auto 0; padding: 24px 28px; border: 1px solid #e3e6e0; border-radius: 8px; font-size: 14px; color: #333; }
+  .rc-title { text-align: center; font-size: 18px; font-weight: bold; color: var(--primary-dark); }
+  .rc-sub { text-align: center; color: #666; margin: 2px 0 16px; }
+  .rc-meta { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; }
+  .rc-meta dt { color: #666; }
+  .rc-divider { border: 0; border-top: 1px solid #ccc; margin: 16px 0; }
+  .rc-line { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; }
+  .rc-line .amt { font-family: Menlo, monospace; white-space: nowrap; }
+  .rc-total { font-weight: bold; font-size: 16px; }
+  .rc-total small { font-weight: normal; color: #666; font-size: 13px; margin-left: 6px; }
   /* ===== Dashboard layout / sidebar / tabs ===== */
-  .layout { display: flex; gap: 12px; align-items: flex-start; margin-top: 18px; }
-  .side { flex: 0 0 150px; position: sticky; top: 16px; background: var(--primary); border-radius: 12px; padding: 14px 10px; display: flex; flex-direction: column; gap: 6px; box-shadow: var(--shadow); }
-  .side-logo { font-weight: 800; color: #fff; font-size: 16px; padding: 2px 8px 10px; letter-spacing: 1px; }
+  .layout { display: flex; gap: 12px; align-items: flex-start; }
+  .side { position: fixed; left: 0; top: 0; bottom: 0; width: 170px; overflow-y: auto; z-index: 10; background: var(--primary); border-radius: 0; padding: 20px 10px; display: flex; flex-direction: column; gap: 6px; box-shadow: var(--shadow); }
+  .side-logo { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; font-weight: 800; color: #fff; font-size: 16px; padding: 2px 4px 14px; letter-spacing: 1px; align-self: stretch; border-bottom: 1px solid rgba(255,255,255,.25); margin-bottom: 8px; }
   .side-logo small { display:block; font-weight:400; font-size:11px; opacity:.8; margin-top:2px; letter-spacing:0; }
+  /* 左上角圓形樹 icon */
+  .logo-mark {
+    flex: 0 0 auto;
+    width: 36px; height: 36px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: #fff; font-size: 19px; line-height: 1;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+  }
+  .logo-text { min-width: 0; }
   .tab-btn { background: rgba(255,255,255,.08); color: #fff; border: 0; border-radius: 9px; padding: 12px 12px; cursor: pointer; text-align: left; font-size: 15px; font-weight: 600; transition: .15s; }
   .tab-btn:hover { background: rgba(255,255,255,.18); }
   .tab-btn.active { background: #fff; color: var(--primary-dark); box-shadow: var(--shadow); }
   .main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+  /* 側欄最下方：手動同步 */
+  .side-sync { margin-top: auto; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.25); }
+  .sync-btn {
+    width: 100%; background: var(--accent); color: #3b2c00; border: 0; border-radius: 9px;
+    padding: 12px 10px; font-size: 14px; font-weight: 800; cursor: pointer; transition: .15s;
+  }
+  .sync-btn:hover:not(:disabled) { filter: brightness(1.08); }
+  .sync-btn:disabled { background: rgba(255,255,255,.25); color: rgba(255,255,255,.7); cursor: not-allowed; }
+  .sync-btn.clean { background: rgba(255,255,255,.14); color: #fff; }
+  .sync-state { margin-top: 8px; font-size: 11px; line-height: 1.5; color: rgba(255,255,255,.85); }
+  .sync-state b { color: var(--accent); }
+  /* 未同步＝前端記憶，一律用琥珀色標示 */
+  .unsynced { color: #b26a00; }
+  table.ds tr.unsynced td { background: #fff8e1 !important; }
+  table.ds tr.unsynced td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+  .tag-local {
+    display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+    background: #fff3cd; color: #8a6100; font-size: 11px; font-weight: 700; white-space: nowrap;
+  }
+  .roster b.local { color: #b26a00; }
+  .sync-conflict { margin: 12px 0 0; font-size: 14px; }
+  .sync-conflict li { padding: 6px 10px; border-left: 4px solid #d32f2f; background: #fdf3f2; margin-bottom: 6px; list-style: none; }
   .panel { display: none; }
   .panel.active { display: block; }
-  @media (max-width: 760px) {
+  @media screen and (max-width: 760px) {
     .layout { flex-direction: column; }
-    .side { flex: 1 1 auto; flex-direction: row; flex-wrap: wrap; position: static; top: 0; padding: 8px; }
-    .side-logo { display: none; }
+    body { padding-left: 24px; }
+    .side { flex: 1 1 auto; flex-direction: row; flex-wrap: wrap; position: static; width: auto; border-radius: 12px; padding: 8px; }
+    .side-logo { display: inline-flex; padding: 0 4px; align-self: center; border-bottom: 0; margin-bottom: 0; }
+    .side-logo .logo-text { display: none; }
     .tab-btn { flex: 1 1 auto; text-align: center; }
+    .side-sync { flex: 1 1 100%; margin-top: 0; padding-top: 8px; display: flex; align-items: center; gap: 10px; }
+    .side-sync .sync-btn { width: auto; flex: 0 0 auto; }
+    .sync-state { margin-top: 0; }
   }
   /* Attendance panel */
-  .att-date-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px; }
-  .att-chip { border: 1px solid #cfd8cb; background: #fff; border-radius: 8px; padding: 7px 12px; font-size: 14px; cursor: pointer; font-weight: 600; color: #444; }
-  .att-chip.active { background: var(--primary); color:#fff; border-color: var(--primary); }
-  .att-chip.weekend { color:#bbb; pointer-events:none; }
+  /* 點名日期選擇器 */
+  .att-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .att-field {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: #fff; border: 1px solid #cfd8cb; border-radius: 10px;
+    padding: 9px 14px; font-size: 14px; font-weight: 700; color: var(--primary-dark);
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .att-field:hover { border-color: var(--primary); }
+  .att-field:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(46,125,50,.15); }
+  .att-field input[type=date] {
+    border: 0; background: transparent; padding: 0;
+    font: inherit; font-weight: 600; color: #333;
+    cursor: pointer; accent-color: var(--primary);
+  }
+  .att-field input[type=date]:focus { outline: none; }
+  .att-field input[type=date]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: .55; }
+  .att-field input[type=date]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+  .att-wd { font-size: 13px; font-weight: 600; color: #7b857a; }
+  a.btn { text-decoration: none; display: inline-block; }
+  .gf-ok { color: var(--primary); font-weight: 700; }
+  .live-dot { color: var(--primary); font-weight: 700; }
+  .live-dot.beat { animation: livebeat .9s ease-out; }
+  @keyframes livebeat {
+    0%   { opacity: .25; }
+    100% { opacity: 1; }
+  }
+  .live-off { color: #999; font-weight: 700; }
+  .gf-off { color: #b26a00; font-weight: 700; }
+  .hol-name { font-size: 14px; padding: 10px 14px; border: 1px solid #cfd8cb; border-radius: 10px; min-width: 220px; }
+  .hol-name:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(46,125,50,.15); }
+  .row-act { border: 0; background: none; cursor: pointer; font-size: 13px; font-weight: 700; padding: 2px 8px; }
+  .row-act.edit { color: var(--primary); }
+  .row-act.del { color: #d32f2f; }
+  .row-act:hover { text-decoration: underline; }
+  .hol-warn { color: #d32f2f; font-weight: 700; }
+  /* 日曆：假期格 */
+  table.cal td.holiday { background: #fdf3f2; }
+  .holiday-tag { display: inline-block; font-size: 12px; font-weight: 700; color: #d32f2f; }
+  .att-toolbar .btn {
+    font-size: 14px; font-weight: 600; padding: 10px 16px;
+    border-radius: 10px; border: 1px solid #cfd8cb;
+    background: #fff; color: #555; cursor: pointer; transition: .15s;
+  }
+  .att-toolbar .btn:hover { border-color: var(--primary); color: var(--primary); }
+  .hint { font-size: 13px; color: #7b857a; margin-top: 12px; }
+  .th-all {
+    margin-left: 10px; font-size: 12px; font-weight: 700; padding: 3px 10px;
+    min-width: 62px; text-align: center; box-sizing: border-box;
+    border: 1px solid var(--primary); border-radius: 999px;
+    background: #fff; color: var(--primary); cursor: pointer;
+  }
+  .th-all:hover:not(:disabled) { background: var(--primary); color: #fff; }
+  .th-all:disabled { border-color: #ccc; color: #bbb; cursor: not-allowed; }
+  /* 通用次要按鈕 */
+  .btn {
+    font-size: 14px; font-weight: 600; padding: 10px 16px;
+    border-radius: 10px; border: 1px solid #cfd8cb;
+    background: #fff; color: #555; cursor: pointer; transition: .15s;
+  }
+  .btn:hover { border-color: var(--primary); color: var(--primary); }
+  /* 收款確認 modal */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,.45);
+    display: flex; align-items: center; justify-content: center; z-index: 100; padding: 20px;
+  }
+  .modal-backdrop[hidden] { display: none; }
+  .modal {
+    background: #fff; border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,.25);
+    padding: 24px 26px; max-width: 470px; width: 100%;
+  }
+  .modal h3 { font-size: 18px; color: var(--primary-dark); margin-bottom: 12px; }
+  .modal p { font-size: 15px; line-height: 1.8; color: #444; margin-bottom: 20px; }
+  .modal-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .modal-actions .btn-primary, .modal-actions .btn { flex: 1 1 auto; }
+  .recent-batch { margin-top: 10px; font-size: 13px; color: #7b857a; }
+  /* 寫入資料庫時的等待視窗 */
+  .wait-modal { max-width: 360px; text-align: center; }
+  .wait-modal h3 { margin-bottom: 8px; }
+  .wait-modal p { margin-bottom: 0; font-size: 14px; }
+  .spinner {
+    width: 38px; height: 38px; margin: 4px auto 16px;
+    border: 4px solid #e3e6e0; border-top-color: var(--primary);
+    border-radius: 50%; animation: spin .8s linear infinite;
+  }
+  .wait-bar { height: 8px; background: #e6e9e4; border-radius: 4px; overflow: hidden; margin: 16px 0 6px; }
+  .wait-bar i { display: block; height: 100%; width: 0; background: var(--primary); transition: width .25s ease; }
+  .wait-step { font-size: 12px; color: #7b857a; font-variant-numeric: tabular-nums; }
+  .spinner.done { animation: none; border: 0; }
+  .spinner.done::before { content: "✅"; font-size: 34px; line-height: 38px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .recent-batch b { color: #d32f2f; }
   table.att { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
   table.att th, table.att td { border: 1px solid #dde3d9; padding: 8px 10px; text-align: left; }
   table.att th { background: #e8f0e6; color: var(--primary-dark); }
   table.att td:nth-child(3){ text-align:center; }
   table.att input[type=checkbox]{ width:18px; height:18px; cursor:pointer; accent-color: var(--primary); }
+  #attBody tr { cursor: pointer; }
+  #attBody input[type=checkbox] { width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary); }
   .att-actions { margin-top: 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   .att-save-msg { font-size: 14px; color: var(--primary-dark); font-weight: 700; }
+  /* 點名：計數喺按鈕上方，儲存訊息喺下方 */
+  .att-actions-col { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin-top: 12px; }
+  .att-count-row { font-size: 14px; color: #555; }
+  .att-msg-row { min-height: 20px; }
+  /* 退款：唔可以退嘅行照顯示，但淡色兼唔俾撳 */
+  table.ds tr.ref-locked td { color: #aaa; background: #fbfbfa; cursor: not-allowed; }
+  table.ds tr.ref-locked .rct { color: #bbb; }
+  table.ds tr.ref-locked input[type=checkbox] { cursor: not-allowed; }
+  .ref-state { font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .ref-state.ok { color: var(--primary); }
+  .ref-state.part { color: #b26a00; }
+  .ref-state.done { color: #999; }
+  .ref-state.unpaid { color: #d32f2f; }
+  /* 列印：只輸出收據本身，並以 A4 實際尺寸排版（唔靠瀏覽器縮放） */
   @media print {
-    body * { visibility: hidden; }
-    #receiptPrintArea, #receiptPrintArea * { visibility: visible; }
-    #receiptPrintArea { position: absolute; left: 0; top: 0; width: 100%; }
+    @page { size: A4 portrait; margin: 15mm; }
+    /* 版面闊度 = A4 210mm 減左右各 15mm 邊距 = 180mm，令內容啱啱好填滿一頁 */
+    html, body {
+      width: 180mm !important; min-width: 0 !important; max-width: 180mm !important;
+      margin: 0 !important; padding: 0 !important; background: #fff !important;
+      zoom: 1 !important;
+    }
+    .side, .card-hdr, .rb-toolbar, .recent-batch { display: none !important; }
+    .page, .layout, .main, .panel, #receiptPrintArea {
+      display: block !important;
+      width: 180mm !important; min-width: 0 !important; max-width: 180mm !important;
+      gap: 0 !important; margin: 0 !important; padding: 0 !important;
+      float: none !important; position: static !important;
+    }
+    .panel { display: none !important; }
+    .panel[data-panel=pay] { display: block !important; }
+    #receiptPrintArea { box-shadow: none !important; border: 0 !important; border-radius: 0 !important; background: #fff !important; }
+    #receiptSheet { width: 180mm !important; max-width: 180mm !important; margin: 0 !important; padding: 0 !important; }
+    /* 黑白輸出：去除所有顏色與底色 */
+    #receiptSheet, #receiptSheet * { color: #000 !important; background: transparent !important; }
+    /* 字級／間距一律用 pt 同 mm，比例跟足紙張而唔係螢幕 px */
+    #receiptSheet .receipt {
+      box-sizing: border-box !important;
+      width: 180mm !important; max-width: 180mm !important; min-width: 0 !important;
+      border: 0 !important; margin: 0 !important; padding: 0 !important;
+      font-size: 11pt; line-height: 1.5;
+    }
+    .rc-title { font-size: 17pt; margin-bottom: 1mm; }
+    .rc-sub { font-size: 10pt; margin: 0 0 6mm; }
+    .rc-meta { gap: 1.5mm 8mm; font-size: 10.5pt; }
+    .rc-divider { border-top: 0.3mm solid #000 !important; margin: 5mm 0; }
+    .rc-line { padding: 0.7mm 0; font-size: 11pt; line-height: 1.35; }
+    .rc-line .amt { font-size: 10.5pt; }
+    .rc-total { font-size: 13pt; }
+    .rc-total small { font-size: 9.5pt; }
+    .rc-line, .rc-total { page-break-inside: avoid; }
+    #payModal { display: none !important; }
   }
 </style>
 </head>
 <body>
 <div class="page">
 
-  <header>
-    <h1>生命樹中心 · 功課輔導班報名</h1>
-    <p>每星期一至五上課，每個課堂日最多 7 個名額。請先選擇月份，再揀選想報名的日期。</p>
-  </header>
 
   <div class="layout">
     <aside class="side">
-      <div class="side-logo">生命樹中心<small>樹下成長</small></div>
+      <div class="side-logo">
+        <span class="logo-mark" aria-hidden="true">🌴</span>
+        <span class="logo-text">沙田生命樹中心<small>功課輔導班</small></span>
+      </div>
       <button class="tab-btn active" type="button" data-tab="reg">報名管理</button>
       <button class="tab-btn" type="button" data-tab="att">點名管理</button>
       <button class="tab-btn" type="button" data-tab="pay">付款及退款處理</button>
-      <button class="tab-btn" type="button" data-tab="data">模擬數據</button>
+      <button class="tab-btn" type="button" data-tab="hol">假期管理</button>
+      <button class="tab-btn" type="button" data-tab="data">報名數據</button>
+      <div class="side-sync">
+        <button class="sync-btn" type="button" id="syncBtn">⇅ 手動同步</button>
+        <div class="sync-state" id="syncState"></div>
+      </div>
     </aside>
     <main class="main">
       <section class="panel active" data-panel="reg">
@@ -223,34 +429,43 @@
   <div class="card">
     <h2>報名表</h2>
     <form id="appForm">
-      <div class="field">
-        <label for="studentName">學生姓名 *</label>
-        <input type="text" id="studentName" placeholder="請輸入學生姓名" required>
+      <div class="form-row">
+        <div class="field">
+          <label for="studentName">學生姓名 *</label>
+          <div class="input-clear">
+            <input type="text" id="studentName" placeholder="請輸入學生姓名" required>
+            <button class="clear-x" type="button" id="clearBtn" title="清除上一次報名" aria-label="清除上一次報名" hidden>&times;</button>
+          </div>
+        </div>
+        <button class="btn-primary" type="button" id="submitPaidBtn">提交報名（已收款）</button>
+        <button class="btn-primary" type="button" id="submitUnpaidBtn">提交報名（未收款）</button>
+        <button class="btn-primary" type="button" id="gotoReceiptBtn" disabled>前往列印收據</button>
       </div>
-      <div class="count-pick" id="pickCount">已揀選 0 天</div>
-      <button class="btn-primary" type="submit" id="submitBtn">產生報名日期清單</button>
     </form>
     <div id="result"></div>
-  </div<!-- Month selector -->
+  </div>
+  <!-- Month selector -->
   <div class="card">
     <div class="card-hdr">
       <h2>選擇課堂月份</h2>
+      <span class="count-pick" id="pickCount">已剔選 0 天</span>
     </div>
     <div class="toolbar">
       <button class="nav" id="prevMonth" type="button">&larr; 上一個月</button>
       <select id="yearSelect"></select>
       <select id="monthSelect"></select>
       <button class="nav" id="nextMonth" type="button">下一個月 &rarr;</button>
-      <span class="month-label" id="monthLabel"></span>
+      <button class="btn" id="calReloadBtn" type="button">⟳ 重新整理本月</button>
+      <span class="ds-count" id="calLoadNote"></span>
     </div>
 
     <table class="cal" id="cal">
       <thead><tr>
-        <th data-wd="1">星期一<span class="wd-hint">點擊選取／取消全月</span></th>
-        <th data-wd="2">星期二<span class="wd-hint">點擊選取／取消全月</span></th>
-        <th data-wd="3">星期三<span class="wd-hint">點擊選取／取消全月</span></th>
-        <th data-wd="4">星期四<span class="wd-hint">點擊選取／取消全月</span></th>
-        <th data-wd="5">星期五<span class="wd-hint">點擊選取／取消全月</span></th>
+        <th data-wd="1"><input type="checkbox" class="wd-cb">星期一<span class="wd-hint">剔選＝全月</span></th>
+        <th data-wd="2"><input type="checkbox" class="wd-cb">星期二<span class="wd-hint">剔選＝全月</span></th>
+        <th data-wd="3"><input type="checkbox" class="wd-cb">星期三<span class="wd-hint">剔選＝全月</span></th>
+        <th data-wd="4"><input type="checkbox" class="wd-cb">星期四<span class="wd-hint">剔選＝全月</span></th>
+        <th data-wd="5"><input type="checkbox" class="wd-cb">星期五<span class="wd-hint">剔選＝全月</span></th>
       </tr></thead>
       <tbody id="calBody"></tbody>
     </table>
@@ -260,22 +475,56 @@
       <section class="panel" data-panel="att">
       <div class="card">
         <h2>點名管理</h2>
-        <div class="toolbar">
-          <label>點名日期 <input type="date" id="attDate"></label>
+        <div class="toolbar att-toolbar">
+          <label class="att-field">點名日期
+            <input type="date" id="attDate">
+            <span class="att-wd" id="attWd"></span>
+          </label>
           <button class="btn" type="button" id="attRefreshBtn">刷新</button>
         </div>
-        <p class="hint" id="attHint">揀日期後，下方會列出當日已報名學生，剔選出席後按「儲存點名」。</p>
+        <p class="hint" id="attHint">選擇日期後，下方會列出當日已報名的學生；勾選出席後按「確認點名」。</p>
         <table class="ds">
           <thead><tr>
             <th>學生姓名</th>
-            <th class="num">出席</th>
+            <th class="num">出席 <button type="button" class="th-all" id="attAllBtn">全選</button></th>
           </tr></thead>
           <tbody id="attBody"></tbody>
         </table>
-        <div class="toolbar" style="margin-top:12px">
-          <button class="btn-primary" type="button" id="attSaveBtn">儲存點名</button>
-          <span id="attCount"></span>
+        <div class="att-actions-col">
+          <div class="att-count-row"><span id="attCount"></span></div>
+          <button class="btn-primary" type="button" id="attSaveBtn">確認點名</button>
+          <div class="att-msg-row"><span class="att-save-msg" id="attSaveMsg"></span></div>
         </div>
+      </div>
+      </section>
+
+      <section class="panel" data-panel="hol">
+      <div class="card">
+        <div class="card-hdr">
+          <h2>假期管理</h2>
+          <span class="ds-count" id="holCount"></span>
+        </div>
+        <div class="toolbar att-toolbar">
+          <label class="att-field">假期日期
+            <input type="date" id="holDate">
+            <span class="att-wd" id="holWd"></span>
+          </label>
+          <input type="text" id="holName" class="hol-name" placeholder="假期名稱（例：重陽節）">
+          <button class="btn-primary" type="button" id="holSaveBtn">新增假期</button>
+          <button class="btn" type="button" id="holCancelBtn" hidden>取消修改</button>
+          <button class="btn" type="button" id="holRefreshBtn">刷新</button>
+          <span class="att-save-msg" id="holMsg"></span>
+        </div>
+        <p class="hint">設為假期的日子唔會開放報名，剔選星期幾時亦會自動跳過，報名堂數同收據都唔會計入。</p>
+        <table class="ds">
+          <thead><tr>
+            <th>日期</th>
+            <th>假期名稱</th>
+            <th>當日已有報名</th>
+            <th class="num">操作</th>
+          </tr></thead>
+          <tbody id="holBody"></tbody>
+        </table>
       </div>
       </section>
 
@@ -283,16 +532,16 @@
   <!-- Data set -->
   <div class="card">
     <div class="card-hdr">
-      <h2>報名資料（Data Set）</h2>
+      <h2>報名資料</h2>
       <span class="ds-count" id="dsCount"></span>
     </div>
     <table class="ds">
       <thead><tr>
         <th class="num" style="width:50px">#</th>
+        <th>報名時間</th>
         <th>收據編號</th>
         <th>學生姓名</th>
         <th>上課日期</th>
-        <th>報名時間</th>
         <th>出席</th>
         <th class="num">收到費用</th>
         <th class="num">退回費用</th>
@@ -310,16 +559,46 @@
       <span class="ds-count" id="rbCount"></span>
     </div>
     <div class="toolbar rb-toolbar">
-      <label>收據批次（只顯示<b>當前月份</b>內建立的收據）：
+      <label>報名月份：
+        <input type="month" id="rbMonth">
+      </label>
+      <label>收據批次：
         <select id="receiptSelect"></select>
       </label>
       <label>每堂學費 (HK$)：
-        <input type="number" id="feeInput" min="1" step="1" value="100">
+        <input type="number" id="feeInput" min="1" step="1" value="60">
       </label>
       <button class="btn-primary" type="button" id="printReceiptBtn">列印收據</button>
     </div>
     <div class="recent-batch" id="rbHint"></div>
-    <div class="excel-wrap" id="receiptSheet"></div>
+    <div id="receiptSheet"></div>
+      </div>
+
+      <div class="card">
+        <h2>退款處理</h2>
+        <div class="toolbar att-toolbar">
+          <label class="att-field">退款日期
+            <input type="date" id="refDate">
+            <span class="att-wd" id="refWd"></span>
+          </label>
+          <button class="btn" type="button" id="refRefreshBtn">刷新</button>
+        </div>
+        <p class="hint">選擇日期後，下方列出當日已收款的報名；勾選學生後按「確認退款」，該堂學費會記入「退回費用」。</p>
+        <table class="ds">
+          <thead><tr>
+            <th>學生姓名</th>
+            <th>收據編號</th>
+            <th class="num">已收費用</th>
+            <th>狀態</th>
+            <th class="num">退款 <button type="button" class="th-all" id="refAllBtn">全選</button></th>
+          </tr></thead>
+          <tbody id="refBody"></tbody>
+        </table>
+        <div class="toolbar" style="margin-top:12px">
+          <button class="btn-primary" type="button" id="refSaveBtn">確認退款</button>
+          <span id="refCount"></span>
+          <span class="att-save-msg" id="refSaveMsg"></span>
+        </div>
       </div>
       </section>
     </main>
@@ -327,119 +606,143 @@
 
 </div>
 
+<!-- 寫入資料庫：等待中 -->
+<div class="modal-backdrop" id="waitModal" hidden>
+  <div class="modal wait-modal">
+    <div class="spinner" id="waitSpin"></div>
+    <h3 id="waitTitle">處理中…</h3>
+    <p id="waitMsg">正在寫入資料庫，請稍候。</p>
+    <div class="wait-bar"><i id="waitBar"></i></div>
+    <div class="wait-step" id="waitStep"></div>
+  </div>
+</div>
+
+<!-- 手動同步：重複報名提示 -->
+<div class="modal-backdrop" id="syncModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="syncModalTitle">
+    <h3 id="syncModalTitle">同步已中止</h3>
+    <div id="syncModalMsg"></div>
+    <div class="modal-actions" style="margin-top:20px">
+      <button type="button" class="btn-primary" id="syncOkBtn">知道了</button>
+    </div>
+  </div>
+</div>
+
+<!-- 列印收據前的收款確認 -->
+<div class="modal-backdrop" id="payModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="payModalTitle">
+    <h3 id="payModalTitle">確認收款</h3>
+    <p id="payModalMsg"></p>
+    <div class="modal-actions">
+      <button type="button" class="btn-primary" id="payYesBtn">是，幫我更新付款狀態</button>
+      <button type="button" class="btn" id="payNoBtn">不，只是預覽收據</button>
+    </div>
+  </div>
+</div>
+
 <script>
-// ===== 生命樹中心・功課輔導班 (Demo) =====
-// Demo dataset: Oct 2026, seat occupancy per weekday.
-// Each day has max 7 seats. Numbers below = seats already taken.
-const BASE_CAPACITY = 7;
-const FEES_PER_CLASS = 100; // demo 每堂學費 HK$100（收據批次預設，與 feeInput 初始值一致）
-
-// Demo student name pool (used to fill seats with names)
-const DEMO_STUDENT_POOL = ["小美","小明","小華","小玲","小杰","小芳","阿強","小慧","子豪","佳恩","佩珊","浩宇","欣怡","承翰","品妍","冠廷","宜庭","志豪","雅婷","柏宇"];
-
-// 2026 Oct demo data: key "YYYY-MM-DD" -> seats already registered (count)
-const demoCounts = {
-  // week 1: 10/1(四), 10/2(五)
-  "2026-10-01": 4,
-  "2026-10-02": 7,   // 已滿
-  // week 2
-  "2026-10-05": 2,
-  "2026-10-06": 5,
-  "2026-10-07": 6,
-  "2026-10-08": 3,
-  "2026-10-09": 7,   // 已滿
-  // week 3
-  "2026-10-12": 1,
-  "2026-10-13": 0,
-  "2026-10-14": 4,
-  "2026-10-15": 7,   // 已滿
-  "2026-10-16": 2,
-  // week 4
-  "2026-10-19": 5,
-  "2026-10-20": 3,
-  "2026-10-21": 0,
-  "2026-10-22": 6,
-  "2026-10-23": 4,
-  // week 5
-  "2026-10-26": 2,
-  "2026-10-27": 7,   // 已滿
-  "2026-10-28": 3,
-  "2026-10-29": 1,
-  "2026-10-30": 5
+// ===== 後端設定 =====
+// 全部讀寫都行 Apps Script（booking-code.gs）部署出嚟嘅 /exec 網址。
+// 改完 booking-code.gs 記住重新部署「新版本」，否則呢度會寫唔入。
+const GFORM = {
+  webapp: "https://script.google.com/macros/s/AKfycbwLzJIf8CnrmxQ82nryADmedlw9C4qcg-v82dggQEFBXlVVhmg5QTmMvxRgdMVf0eJE/exec",
+  // 試算表網址，淨係方便一鍵開啟；可留空
+  sheet: ""
 };
 
-// Build preset rosters (arrays of names) for the demo data
-function presetRosters() {
-  const r = {};
-  let idx = 0;
-  for (const k in demoCounts) {
-    const n = demoCounts[k];
-    const arr = [];
-    for (let i = 0; i < n; i++) {
-      arr.push(DEMO_STUDENT_POOL[idx++ % DEMO_STUDENT_POOL.length]);
-    }
-    r[k] = arr;
+// 收據產生器設定嘅每堂學費（已收費用送呢個數）
+function currentFee() {
+  const el = document.getElementById("feeInput");
+  const v = el ? +el.value : NaN;
+  return (isFinite(v) && v > 0) ? v : FEES_PER_CLASS;
+}
+
+// 報名唔再即時寫入：一律入「待同步」佇列，由側欄嘅「手動同步」一次過寫入試算表。
+
+// JSONP：file:// 冇得做 CORS，所有讀取都用動態 script + callback
+let jsonpSeq = 0;
+function jsonpGet(params, cb, timeoutMs) {
+  if (!GFORM.webapp) { cb(null); return; }
+  const name = "__gcb" + (++jsonpSeq);
+  const sc = document.createElement("script");
+  let done = false;
+  const finish = (data) => {
+    if (done) return;
+    done = true;
+    try { delete window[name]; } catch (err) { window[name] = undefined; }
+    sc.remove();
+    cb(data);
+  };
+  window[name] = finish;
+  sc.onerror = () => finish(null);
+  setTimeout(() => finish(null), timeoutMs || 6000);   // 後端唔覆都要繼續，唔可以卡住報名
+  const qs = Object.keys(params)
+    .map(k => encodeURIComponent(k) + "=" + encodeURIComponent(params[k])).join("&");
+  sc.src = GFORM.webapp + "?" + qs + "&callback=" + name + "&t=" + Date.now();
+  document.body.appendChild(sc);
+}
+
+// 收據編號改由後端分配，呢度唔再預先問（少一次來回，亦唔會撞號）。
+
+// 點名／收款／退款／假期唔會即時寫入：全部經 queueOp() 入佇列，
+// 由手動同步一次過送去 Apps Script 嘅 batch 端點。
+
+// ===== 沙田生命樹中心・功課輔導班 =====
+// 每位學生可以逐日剔選，或者用星期表頭一次過報全月。
+// 每日名額上限 7 位；資料由本機 localStorage 保存，
+// 如果設定咗 GFORM.webapp，會同 Google Form / 試算表同步。
+const BASE_CAPACITY = 7;
+const FEES_PER_CLASS = 60; // 每堂學費 HK$60（收據批次預設，與 feeInput 初始值一致）
+
+// 某月內所有屬於指定星期幾的日期 key
+function datesOfWeekdays(y, m, wds) {
+  const out = [];
+  const dim = new Date(y, m + 1, 0).getDate();
+  for (let d = 1; d <= dim; d++) {
+    if (wds.includes(new Date(y, m, d).getDay())) out.push(dateKey(y, m, d));
   }
-  return r;
+  return out;
 }
 
 const MONTH_NAMES = ["一月","二月","三月","四月","五月","六月","七月","八月","九月","十月","十一月","十二月"];
 const WEEKDAYS = [1,2,3,4,5]; // Mon(1)..Fri(5), 週末不開課
 
-let year = 2026;
-let month = 9; // 0-based (10月)
-let baseRosters = presetRosters();
+const TODAY = new Date();
+let year = TODAY.getFullYear();
+let month = TODAY.getMonth();   // 0-based
+let baseRosters = {};           // { "2026-10-05": ["學生姓名", ...] }
 let showNames = true;
-let selectedDates = {};
+let selectedDates = {};   // { "2026-10-05": true } — 逐日剔選，星期表頭只係批量開關
 
 // 報名紀錄 Data Set: 每筆 = (學生, 上課日期, 報名時間, 收據編號)
 // 同一張收據 (同一學生・同一批報名日期) 共享同一個收據編號
 let registrations = [];
 let freshRegs = [];
-let receipts = [];
-let rctSeq = 0;
+let lastReceiptNo = null;   // 最近一次報名開出的收據，畀「前往列印收據」用
+let holidays = {};          // { "2026-10-01": "國慶日" } — 中心假期，當日封鎖報名
+let holEditKey = null;      // 正在修改緊嘅假期日期（null = 新增模式）
+let rctSeq = 0;             // 收據流水號；同步時會同試算表對返最新值
 
-function nextReceiptNo() {
-  return "RCT-" + String(++rctSeq).padStart(4, "0");
+const RECEIPT_PREFIX = "TC-", RECEIPT_PAD = 5;
+
+function fmtReceiptNo(n) {
+  return RECEIPT_PREFIX + String(n).padStart(RECEIPT_PAD, "0");
 }
 
-// 由 demo 名單建立收據批次：同一位學生每天的名字會合併為同一張收據
-function initReceipts() {
-  const list = [];
-  const map = {}; // name -> receipt
-  const base = new Date(2026, 9, 1, 8, 30); // demo 起始報名時間 2026-10-01 08:30 (收據於當月建立)
-  let i = 0;
-  const keys = Object.keys(demoCounts).sort();
-  keys.forEach(k => {
-    rosterOf(k).forEach(nm => {
-      if (!map[nm]) {
-        map[nm] = {
-          id: list.length + 1,
-          receiptNo: nextReceiptNo(),
-          name: nm,
-          ts: new Date(base.getTime() + i * 90 * 60 * 1000),
-          dates: []
-        };
-        list.push(map[nm]);
-      }
-      map[nm].dates.push(k);
-      i++;
-    });
-  });
-  return list;
+// 真正嘅收據編號由後端喺鎖入面分配（現有最大 + 1）。
+// 前端只係先開一個暫定編號，寫入成功之後會換成後端回嘅正式編號。
+function tmpReceiptNo() {
+  return "TMP-" + Date.now().toString().slice(-6);
 }
-receipts = initReceipts();
 
-const STORE_KEY = "treeoflifeBooking_v1";
+function isTmpReceipt(no) { return String(no).indexOf("TMP-") === 0; }
 
-function nextReceiptNoStr() {
-  const tail = String(receipts.length ? receipts[receipts.length - 1].receiptNo.split("-")[1] : 0);
-  return "TB-" + String(+tail + 1).padStart(4, "0");
-}
+const STORE_KEY = "treeoflifeBooking_v5"; // v5：改為手動同步，儲存未同步佇列
 
 function persistAll() {
   try {
-    const d = { receipts, registrations, selectedDates, selectedWeekdays, year, month };
+    const d = { registrations, selectedDates, holidays, year, month,
+                syncQueue, localEdits, rctSeq, lastReceiptNo };
     localStorage.setItem(STORE_KEY, JSON.stringify(d));
   } catch (e) { /* 隱私模式／磁碟滿：靜默失敗 */ }
 }
@@ -458,13 +761,19 @@ function loadState() {
     const raw = localStorage.getItem(STORE_KEY);
     if (!raw) return false;
     const d = JSON.parse(raw);
-    if (!Array.isArray(d.receipts)) return false;
-    receipts = d.receipts.map(reviveReg);
+    if (!Array.isArray(d.registrations)) return false;
     registrations = (d.registrations || []).map(reviveReg);
     selectedDates = d.selectedDates || {};
-    selectedWeekdays = d.selectedWeekdays || {};
+    holidays = d.holidays || {};
+    syncQueue = Array.isArray(d.syncQueue) ? d.syncQueue : [];
+    localEdits = d.localEdits || {};
+    lastReceiptNo = d.lastReceiptNo || null;
     if (typeof d.year === "number") year = d.year;
     if (typeof d.month === "number") month = d.month;
+    rctSeq = Math.max(+d.rctSeq || 0,
+      registrations.reduce((mx, r) => Math.max(mx, +String(r.receiptNo).split("-")[1] || 0), 0));
+    refreshPending();
+    rebuildRosters();
     return true;
   } catch (e) { return false; }
 }
@@ -473,106 +782,498 @@ function loadState() {
 window.addEventListener("load", () => {
   if (loadState()) {
     hookWeekdayHeaders();
-    renderCal();
+    refreshAll();
     updatePickCount();
-    renderDataset();
-    renderReceiptToolbar();
-    buildReceiptSheet();
-    renderAttPanel();
+    renderHolPanel();
   }
 });
 
-function initRegistrations() {
-  const ledger = [];
-  receipts.forEach(r => {
-    r.dates.forEach(d => {
-      ledger.push({
-        id: ledger.length + 1, name: r.name, date: d, ts: r.ts, receiptNo: r.receiptNo,
-        recvFee: FEES_PER_CLASS, returnFee: 0, attend: 0
-      });
-    });
-  });
-  return ledger;
-}
-registrations = initRegistrations();
+function isHoliday(k) { return Object.prototype.hasOwnProperty.call(holidays, k); }
 
-function rosterOf(key) { return baseRosters[key] || []; }
+function rosterOf(key) { return baseRosters[key] || []; }   // [{name, pending}]
 function takenOf(key) { return rosterOf(key).length; }
+
+// 實時指示用：要有秒數，否則每 5 秒更新一次都睇落一模一樣
+function fmtClock(d) {
+  const p = n => String(n).padStart(2, "0");
+  return p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
+}
+
+// ts 可能係 Date（本機）或者字串（試算表讀回）
+function tsText(v) {
+  return (v instanceof Date) ? fmtTs(v) : String(v || "");
+}
 
 function fmtTs(d) {
   const p = n => String(n).padStart(2, "0");
   return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
 }
 
+// ===== 手動同步（前端記憶 ↔ 試算表）=====
+// 前端所有操作即時反映喺畫面，並標示為「未同步」（琥珀色）；
+// 撳側欄最下方「手動同步」先會寫入試算表。
+// 同步會以「報名管理」當前所在嘅月份讀取，成功之後該月改以試算表資料為準。
+
+let liveByMonth = {};     // { "2026-10": [試算表讀回嘅行] } — 逐個月份快取，切月唔會冇咗
+let loadedFrom = null;    // 已經讀取咗「呢個月及之後」（yyyy-MM）
+let loadedMonths = new Set();  // 另外單獨讀過嘅月份（跳去更早月份時用「重新整理」）
+let syncQueue = [];       // 未同步操作
+let localEdits = {};      // { "收據編號|日期": {attend, recvFee, returnFee} } — 未同步嘅逐行改動
+let syncNote = "";
+let syncing = false;
+let syncResults = [];     // 最近一次寫入後端回傳嘅結果（例如後端分配嘅收據編號）
+let PEND = new Set();     // 未同步嘅行 key，render 之前更新
+
+function hasBackend() { return !!GFORM.webapp; }
+
+// 報名管理所在嘅月份（手動同步就係讀呢個月）
+function activeMonthPrefix() {
+  return year + "-" + String(month + 1).padStart(2, "0");
+}
+
+function rowKey(r) { return r.receiptNo + "|" + r.date; }
+
+// 今日（yyyy-MM-dd）；之前嘅日子唔開放報名
+function todayKeyStr() {
+  const t = new Date();
+  return dateKey(t.getFullYear(), t.getMonth(), t.getDate());
+}
+
+function isPastDate(k) { return k < todayKeyStr(); }
+
+// 平時只讀「上個月及之後」，資料量細、來回快
+function syncFrom() {
+  const t = new Date(TODAY.getFullYear(), TODAY.getMonth() - 1, 1);
+  return t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0");
+}
+
+function defaultScope() { return { from: syncFrom() }; }
+
+function scopeText(scope) {
+  return scope.month ? scope.month : scope.from + " 起";
+}
+
+function isMonthLoaded(m) {
+  return (loadedFrom && m >= loadedFrom) || loadedMonths.has(m);
+}
+
+// 排隊一個待同步操作；同一行嘅同類操作只保留最新一個
+function queueOp(op) {
+  syncQueue = syncQueue.filter(x => !(x.op === op.op && x.receiptNo === op.receiptNo &&
+    String(x.date || "") === String(op.date || "")));
+  syncQueue.push(op);
+  persistAll();
+}
+
+// 逐行覆寫（點名／收款／退款未同步之前，畫面即刻反映）
+function setLocalEdit(key, patch) {
+  localEdits[key] = Object.assign({}, localEdits[key], patch);
+  persistAll();
+}
+
+// 重新計算未同步嘅行
+function refreshPending() {
+  PEND = new Set();
+  const byReceipt = {};
+  syncQueue.forEach(op => {
+    if (op.op === "add") (op.dates || []).forEach(d => PEND.add(op.receiptNo + "|" + d));
+    else if (op.receiptNo && op.date) PEND.add(op.receiptNo + "|" + op.date);
+    else if (op.receiptNo) byReceipt[op.receiptNo] = true;   // pay：成張收據
+  });
+  Object.keys(localEdits).forEach(k => PEND.add(k));
+  if (Object.keys(byReceipt).length) {
+    rawRows().forEach(r => { if (byReceipt[r.receiptNo]) PEND.add(r.receiptNo + "|" + r.date); });
+  }
+}
+
+function isPending(r) { return PEND.has(r.key || rowKey(r)); }
+
+// 一行報名紀錄嘅統一格式（試算表同本機兩邊都經呢度）
+function normRow(r, src) {
+  const key = r.receiptNo + "|" + r.date;
+  const e = localEdits[key] || {};
+  return {
+    key: key, src: src,
+    receiptNo: r.receiptNo,
+    name: r.name,
+    date: r.date,
+    ts: (r.ts instanceof Date) ? fmtTs(r.ts) : String(r.ts || ""),
+    attend: ("attend" in e) ? e.attend : (r.attend ? 1 : 0),
+    recvFee: ("recvFee" in e) ? e.recvFee : (+r.recvFee || 0),
+    returnFee: ("returnFee" in e) ? e.returnFee : (+r.returnFee || 0),
+    holiday: r.holiday || ""
+  };
+}
+
+// 試算表 + 本機（未同步或唔屬於已讀取月份）嘅合併清單
+function sheetRows() {
+  return Object.keys(liveByMonth).reduce((a, m) => a.concat(liveByMonth[m]), []);
+}
+
+function rawRows() {
+  const sheet = sheetRows();
+  if (!loadedFrom && !loadedMonths.size) {
+    return registrations.map(r => normRow(r, "local"));
+  }
+  const seen = new Set(sheet.map(r => r.receiptNo + "|" + r.date));
+  return sheet.map(r => normRow(r, "sheet"))
+    .concat(registrations.filter(r => !seen.has(r.receiptNo + "|" + r.date))
+                         .map(r => normRow(r, "local")));
+}
+
+function allRows() { return rawRows(); }
+
+// 收據由報名行推算，所以試算表嘅收據一樣可以揀嚟列印
+function allReceipts() {
+  const map = new Map();
+  allRows().forEach(r => {
+    let x = map.get(r.receiptNo);
+    if (!x) {
+      x = { receiptNo: r.receiptNo, name: r.name, ts: r.ts, dates: [], fee: 0, paid: false, src: r.src, pending: false };
+      map.set(r.receiptNo, x);
+    }
+    x.dates.push(r.date);
+    if (r.recvFee > 0) { x.paid = true; x.fee = Math.max(x.fee, r.recvFee); }
+    if (r.src === "local") x.src = "local";
+    if (isPending(r)) x.pending = true;
+    if (r.ts && (!x.ts || String(r.ts) < String(x.ts))) x.ts = r.ts;
+  });
+  return [...map.values()].map(x => { x.dates.sort(); return x; });
+}
+
+/** 重建日曆名額名單（試算表 + 未同步嘅本機報名）。 */
+function rebuildRosters() {
+  baseRosters = {};
+  allRows().forEach(r => {
+    if (!r.date) return;
+    (baseRosters[r.date] = baseRosters[r.date] || []).push({ name: r.name, pending: isPending(r) });
+  });
+}
+
+// 讀取試算表（報名管理所在月份）
+function loadSheet(scope, cb) {
+  scope = scope || defaultScope();
+  if (!hasBackend()) { syncNote = "本機模式（未設定後端）"; renderSyncState(); if (cb) cb(false); return; }
+  const params = Object.assign({ action: "registrations" }, scope);
+  jsonpGet(params, (d) => {
+    const ok = !!(d && d.ok && Array.isArray(d.registrations));
+    if (ok) {
+      adoptSheet(d.registrations, scope);
+      syncNote = "已讀取 " + scopeText(scope) + " · " + fmtClock(new Date());
+    } else {
+      syncNote = "讀取失敗，顯示本機資料";
+    }
+    refreshAll();
+    if (cb) cb(ok);
+  });
+}
+
+// ===== 手動同步 =====
+
+// ===== 等待視窗（寫入資料庫期間）=====
+
+let waitTimer = null;
+let waitTotalSteps = 1, waitStepNow = 0;
+
+function openWait(title, msg, total) {
+  const m = document.getElementById("waitModal");
+  clearTimeout(waitTimer);
+  document.getElementById("waitSpin").className = "spinner";
+  document.getElementById("waitTitle").textContent = title || "處理中…";
+  document.getElementById("waitMsg").textContent = msg || "正在寫入資料庫，請稍候。";
+  setWaitProgress(0, total || 1);
+  m.hidden = false;
+}
+
+// 進度條固定兩步：1 = 寫入（POST）完成，2 = 讀取（GET）確認完成
+// 淨係重讀（冇嘢寫）就只有一步。
+function setWaitProgress(step, total) {
+  const bar = document.getElementById("waitBar");
+  const lab = document.getElementById("waitStep");
+  if (!bar || !lab) return;
+  if (total) { waitTotalSteps = total; }
+  waitStepNow = step;
+  const t = waitTotalSteps || 1;
+  bar.style.width = Math.round((Math.min(step, t) / t) * 100) + "%";
+  lab.textContent = "步驟 " + Math.min(step, t) + " / " + t;
+}
+
+function setWait(title, msg) {
+  if (document.getElementById("waitModal").hidden) return;
+  if (title) document.getElementById("waitTitle").textContent = title;
+  if (msg) document.getElementById("waitMsg").textContent = msg;
+}
+
+// 寫入 + 重讀都完成先會行呢度：確認資料庫已經有嘢，畫面亦已更新
+function doneWait(msg) {
+  const m = document.getElementById("waitModal");
+  if (m.hidden) return;
+  setWaitProgress(waitTotalSteps, waitTotalSteps);
+  document.getElementById("waitSpin").className = "spinner done";
+  document.getElementById("waitTitle").textContent = "已完成";
+  document.getElementById("waitMsg").textContent = msg || "資料已寫入資料庫，日曆已更新。";
+  waitTimer = setTimeout(() => { m.hidden = true; }, 1400);
+}
+
+function hideWait() {
+  clearTimeout(waitTimer);
+  document.getElementById("waitModal").hidden = true;
+}
+
+function showSyncError(html, title) {
+  document.getElementById("syncModalTitle").textContent = title || "同步已中止";
+  document.getElementById("syncModalMsg").innerHTML = html;
+  document.getElementById("syncModal").hidden = false;
+  document.getElementById("syncOkBtn").focus();
+}
+
+function dupMessage(dup) {
+  return '<p>以下報名喺試算表已經有紀錄，為免出現重複，今次<b>完全冇寫入</b>任何資料：</p>' +
+    '<ul class="sync-conflict">' +
+    dup.map(x => "<li><b>" + esc(x.name) + "</b>　" + fmtKey(x.date) +
+      (x.receiptNo ? "（本機收據 " + x.receiptNo + "）" : "") + "</li>").join("") +
+    '</ul><p>請先到試算表處理該筆紀錄（刪除或修正），再返嚟撳一次「手動同步」。</p>';
+}
+
+// 一次過送一批操作；ops 太長就分批
+// 預先切批，令等待視窗嘅分母準確
+// 一批最多 25 個操作，另外守住網址長度上限
+function splitBatches(ops) {
+  const out = [];
+  let cur = [], size = 0;
+  ops.forEach(op => {
+    const len = JSON.stringify(op).length;
+    if (cur.length >= 25 || (size + len > 5000 && cur.length)) { out.push(cur); cur = []; size = 0; }
+    cur.push(op); size += len;
+  });
+  if (cur.length) out.push(cur);
+  return out;
+}
+
+function sendBatches(batches, onDone, collected, idx) {
+  collected = collected || [];
+  idx = idx || 0;
+  const batch = batches[idx];
+  jsonpGet({ action: "batch", ops: JSON.stringify(batch) }, (d) => {
+    if (!(d && d.ok && d.batch)) { onDone(false, batch, d); return; }
+    if (d.batch.conflicts && d.batch.conflicts.length) { onDone(false, batch, d, d.batch.conflicts); return; }
+    // 呢批成功：由待同步清單剔走
+    syncQueue = syncQueue.filter(x => batch.indexOf(x) < 0);
+    persistAll();
+    renderSyncState();
+    collected = collected.concat(d.batch.results || []);
+    if (idx + 1 < batches.length) sendBatches(batches, onDone, collected, idx + 1);
+    else { setWaitProgress(1); onDone(true, null, null, null, collected); }   // 寫入完成 = 第 1 步
+  }, 20000);
+}
+
+/**
+ * 寫入 + 讀取。報名、點名、收款、退款、假期做完會即刻叫一次（silent）；
+ * 側欄嘅「手動同步」亦係行呢度，用嚟重試寫唔到嘅項目或者單純重讀。
+ * 流程：POST（batch）→ GET（當月）→ 前端記憶變成讀取數據。
+ * 重複報名由後端 applyBatch_ 擋住，成批唔會寫入。
+ */
+function manualSync(opts) {
+  opts = opts || {};
+  if (syncing) return;
+  if (!hasBackend()) {
+    syncNote = "未設定後端，無法同步";
+    renderSyncState();
+    hideWait();
+    showSyncError("<p>未設定 Apps Script 網址（GFORM.webapp），所有資料只會留喺本機。</p>", "未設定同步");
+    if (opts.onDone) opts.onDone(false, "no-backend");
+    return;
+  }
+  syncing = true;
+  syncNote = syncQueue.length ? "寫入中…" : "讀取中…";
+  renderSyncState();
+  const batches = splitBatches(syncQueue.slice());
+  if (opts.wait) {
+    // 分母 = 堂數（每堂一步）+ 1（最後 GET 返嚟確認）
+    openWait(opts.title || "處理中…",
+      batches.length ? "正在寫入資料庫，請稍候。" : "正在讀取資料庫，請稍候。",
+      batches.length ? 2 : 1);
+  }
+
+  const scope = opts.scope || defaultScope();
+  const reload = (okNote) => {
+    jsonpGet(Object.assign({ action: "registrations" }, scope), (d2) => {
+      syncing = false;
+      if (d2 && d2.ok && Array.isArray(d2.registrations)) {
+        adoptSheet(d2.registrations, scope);
+        syncNote = okNote + " " + scopeText(scope) + " · " + fmtClock(new Date());
+        refreshAll();
+        doneWait(opts.done);
+        if (opts.onDone) opts.onDone(true, null, syncResults);
+      } else {
+        syncNote = "已寫入，但重讀失敗";
+        refreshAll();
+        hideWait();
+        showSyncError("<p>資料已寫入，但讀返嚟確認嗰陣失敗，畫面可能唔係最新。請撳側欄嘅「手動同步」再讀一次。</p>",
+          "未能確認");
+        if (opts.onDone) opts.onDone(false, "reload-failed");
+      }
+    }, 20000);
+  };
+
+  const hadHolidayOps = syncQueue.some(op => op.op === "setHoliday" || op.op === "delHoliday");
+  if (!syncQueue.length) { reload("✅ 已讀取"); return; }
+  setWait(null, "正在寫入資料庫…");
+
+  sendBatches(batches, (ok, batch, resp, conflicts, results) => {
+    if (!ok) {
+      syncing = false;
+      syncNote = "⚠️ 寫入失敗，尚餘 " + syncQueue.length + " 項未同步";
+      refreshAll();
+      hideWait();
+      // 舊版後端：未知 action 會當成讀取，回傳 registrations 而冇 batch 欄位
+      const stale = !!(resp && resp.ok && !resp.batch);
+      showSyncError(conflicts && conflicts.length
+        ? dupMessage(conflicts.reduce((a, c) => a.concat((c.dates || []).map(dt =>
+            ({ name: c.name, date: dt, receiptNo: c.receiptNo }))), []))
+        : stale
+          ? "<p>後端仲係<b>舊版本</b>，未有「batch」寫入端點，所以寫唔入資料庫。</p>" +
+            "<p>請將 <b>booking-code.gs</b> 貼返入 Apps Script，再<b>「部署 → 管理部署作業 → 編輯 → 新版本」</b>，" +
+            "之後撳側欄嘅「手動同步」重試。未寫入嘅項目仍然保留。</p>"
+          : "<p>寫入試算表時失敗，未寫入嘅項目仍然保留喺前端，可以撳側欄嘅「手動同步」再試。</p>" +
+            (resp && resp.error ? "<p>" + esc(String(resp.error)) + "</p>" : ""),
+        stale ? "後端未更新" : "同步已中止");
+      if (opts.onDone) opts.onDone(false, stale ? "stale-backend" : (conflicts && conflicts.length ? "duplicate" : "write-failed"));
+      return;
+    }
+    localEdits = {};          // 全部已寫入試算表
+    persistAll();
+    syncResults = results || [];
+    setWait(null, "寫入完成，正在向資料庫確認…");
+    if (hadHolidayOps) loadHolidays();     // 假期以試算表為準，重讀一次
+    reload("✅ 已同步");
+  });
+}
+
+// 同步成功：該月份嘅資料改以試算表為準，清走對應嘅前端記憶
+// rows = 今次讀返嚟嘅行；scope = {from:'yyyy-MM'} 或 {month:'yyyy-MM'}
+function adoptSheet(rows, scope) {
+  const inScope = d => scope.month
+    ? String(d).indexOf(scope.month + "-") === 0
+    : String(d).slice(0, 7) >= scope.from;
+
+  // 先清走範圍內嘅舊快取，再逐月入返
+  Object.keys(liveByMonth).forEach(m => {
+    if (scope.month ? m === scope.month : m >= scope.from) delete liveByMonth[m];
+  });
+  rows.forEach(r => {
+    if (!r.date || !inScope(r.date)) return;
+    const m = String(r.date).slice(0, 7);
+    (liveByMonth[m] = liveByMonth[m] || []).push(r);
+  });
+
+  // 記低邊啲月份已經讀過（即使當月一筆都冇）
+  if (scope.month) { liveByMonth[scope.month] = liveByMonth[scope.month] || []; loadedMonths.add(scope.month); }
+  else { loadedFrom = (loadedFrom && loadedFrom < scope.from) ? loadedFrom : scope.from; }
+
+  // 範圍內嘅本機副本可以清走（仲未寫入嘅項目留喺 syncQueue）
+  const stillPending = new Set();
+  syncQueue.forEach(op => {
+    if (op.op === "add") (op.dates || []).forEach(d => stillPending.add(op.receiptNo + "|" + d));
+  });
+  registrations = registrations.filter(r =>
+    !inScope(r.date) || stillPending.has(r.receiptNo + "|" + r.date));
+  Object.keys(localEdits).forEach(k => {
+    if (inScope(k.split("|")[1]) && !stillPending.has(k)) delete localEdits[k];
+  });
+  freshRegs = [];
+  persistAll();
+}
+
+function renderSyncState() {
+  const btn = document.getElementById("syncBtn");
+  const st = document.getElementById("syncState");
+  if (!btn || !st) return;
+  const n = syncQueue.length;
+  btn.disabled = syncing;
+  btn.textContent = syncing ? "同步中…" : (n ? "⇅ 手動同步（" + n + "）" : "⇅ 手動同步");
+  btn.classList.toggle("clean", n === 0 && !syncing);
+  const m = activeMonthPrefix();
+  st.innerHTML = (n ? "<b>" + n + " 項未同步</b><br>" : "") +
+    "讀取範圍：" + (loadedFrom ? loadedFrom + " 起" : "未讀取") + "<br>" +
+    (syncNote || (hasBackend() ? "尚未讀取" : "本機模式"));
+  const note = document.getElementById("calLoadNote");
+  if (note) {
+    note.innerHTML = isMonthLoaded(m)
+      ? ""
+      : '<b class="unsynced">' + m + ' 未讀取資料，請撳「重新整理本月」</b>';
+  }
+}
+
+// 全頁重畫（同步、讀取、報名之後都行呢度）
+function refreshAll() {
+  refreshPending();
+  rebuildRosters();
+  renderCal();
+  renderDataset();
+  renderAttPanel();
+  renderRefPanel();
+  renderReceiptToolbar();
+  buildReceiptSheet();
+  renderHolPanel();
+  renderSyncState();
+}
+
 function renderDataset() {
-  const sorted = registrations.slice().sort((a, b) => b.ts - a.ts); // 最新報名置頂
+  const rows = allRows().slice().sort((a, b) => String(b.ts).localeCompare(String(a.ts))); // 最新報名置頂
   const tbody = document.getElementById("dsBody");
   tbody.innerHTML = "";
-  sorted.forEach(r => {
+  rows.forEach((r, i) => {
     const tr = document.createElement("tr");
-    if (freshRegs.includes(r)) tr.className = "fresh";
+    const pending = isPending(r);
+    if (pending) tr.className = "unsynced";
+
     const tdSeq = document.createElement("td");
     tdSeq.className = "num";
-    tdSeq.textContent = r.id;
+    tdSeq.textContent = i + 1;
+    const tdTs = document.createElement("td");
+    tdTs.className = "ts";
+    tdTs.textContent = r.ts;
     const tdRct = document.createElement("td");
     tdRct.className = "rct";
-    tdRct.textContent = r.receiptNo;
+    tdRct.innerHTML = (isTmpReceipt(r.receiptNo) ? "（待分配）" : esc(r.receiptNo)) +
+      (pending ? '<span class="tag-local">未同步</span>' : "");
     const tdName = document.createElement("td");
     tdName.textContent = r.name;
     const tdDate = document.createElement("td");
-    tdDate.textContent = fmtKey(r.date);
-    const tdTs = document.createElement("td");
-    tdTs.textContent = fmtTs(r.ts);
+    tdDate.innerHTML = esc(fmtKey(r.date)) +
+      (r.holiday || isHoliday(r.date) ? '<span class="tag-local">假期</span>' : "");
     const tdAtt = document.createElement("td");
-    tdAtt.className = r.attend ? "att-yes" : "att-no";
     tdAtt.textContent = r.attend ? "已出席" : "未出席";
-    // 收到費用：報名時自動依每堂學費寫入
     const tdGot = document.createElement("td");
     tdGot.className = "num-right";
-    tdGot.textContent = "$ " + r.recvFee.toLocaleString();
-    // 退回費用：人手輸入
+    tdGot.textContent = r.recvFee > 0 ? "$ " + r.recvFee : "未收";
     const tdBack = document.createElement("td");
     tdBack.className = "num-right";
-    const backIn = document.createElement("input");
-    backIn.type = "number";
-    backIn.min = "0";
-    backIn.max = (r.recvFee || 0).toString();
-    backIn.step = "1";
-    backIn.value = r.returnFee;
-    backIn.className = "ret-input";
-    backIn.dataset.id = r.id;
-    backIn.oninput = () => {
-      const v = Math.min(r.recvFee, Math.max(0, +backIn.value || 0));
-      r.returnFee = v;
-      backIn.value = v;
-      if (v > 0) { tr.classList.add("ret"); } else { tr.classList.remove("ret"); }
-    };
-    tdBack.appendChild(backIn);
-    tr.appendChild(tdSeq);
-    tr.appendChild(tdRct);
-    tr.appendChild(tdName);
-    tr.appendChild(tdDate);
-    tr.appendChild(tdTs);
-    tr.appendChild(tdAtt);
-    tr.appendChild(tdGot);
-    tr.appendChild(tdBack);
+    tdBack.textContent = r.returnFee > 0 ? "$ " + r.returnFee : "—";
+
+    [tdSeq, tdTs, tdRct, tdName, tdDate, tdAtt, tdGot, tdBack].forEach(td => tr.appendChild(td));
     tbody.appendChild(tr);
   });
-  document.getElementById("dsCount").textContent = "共 " + registrations.length + " 筆報名紀錄 · " + receipts.length + " 張收據";
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">尚未有任何報名紀錄。</td></tr>';
+  }
+  const pend = rows.filter(isPending).length;
+  const sheetN = rows.length - pend;
+  document.getElementById("dsCount").innerHTML =
+    '共 ' + rows.length + ' 筆 · <span class="gf-ok">試算表 ' + sheetN + '</span>' +
+    (pend ? ' · <b class="unsynced">未同步 ' + pend + '</b>' : "") +
+    (syncNote ? ' · ' + esc(syncNote) : "");
 }
 
 function dateKey(y, m, d) {
   return y + "-" + String(m + 1).padStart(2, "0") + "-" + String(d).padStart(2, "0");
 }
 
-function refreshLabel() {
-  document.getElementById("monthLabel").textContent = year + "年" + MONTH_NAMES[month];
-}
-
 function initSelectors() {
   const ys = document.getElementById("yearSelect");
   ys.innerHTML = "";
-  for (let y = 2026; y <= 2027; y++) {
+  for (let y = TODAY.getFullYear() - 1; y <= TODAY.getFullYear() + 2; y++) {
     const o = document.createElement("option");
     o.value = y; o.textContent = y + "年";
     if (y === year) o.selected = true;
@@ -586,25 +1287,26 @@ function initSelectors() {
     if (i === month) o.selected = true;
     ms.appendChild(o);
   }
-  ys.onchange = () => { year = +ys.value; refreshLabel(); renderCal(); renderReceiptToolbar(); buildReceiptSheet(); };
-  ms.onchange = () => { month = +ms.value; refreshLabel(); renderCal(); renderReceiptToolbar(); buildReceiptSheet(); };
+  ys.onchange = () => { year = +ys.value; renderCal(); renderSyncState(); };
+  ms.onchange = () => { month = +ms.value; renderCal(); renderSyncState(); };
   document.getElementById("prevMonth").onclick = () => {
     month--; if (month < 0) { month = 11; year--; }
-    syncSelectors(); renderCal(); renderReceiptToolbar(); buildReceiptSheet();
+    syncSelectors(); renderCal(); renderSyncState();
   };
   document.getElementById("nextMonth").onclick = () => {
     month++; if (month > 11) { month = 0; year++; }
-    syncSelectors(); renderCal(); renderReceiptToolbar(); buildReceiptSheet();
+    syncSelectors(); renderCal(); renderSyncState();
   };
 }
 
 function syncSelectors() {
   document.getElementById("yearSelect").value = year;
   document.getElementById("monthSelect").value = month;
-  refreshLabel();
 }
 
 function renderCal() {
+  pruneSelectedDates();
+  renderWeekdayHeaders();
   const body = document.getElementById("calBody");
   body.innerHTML = "";
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -644,46 +1346,70 @@ function renderCal() {
         const taken = roster.length;
         const left = BASE_CAPACITY - taken;
         const isFull = taken >= BASE_CAPACITY;
-        const pct = Math.min(100, (taken / BASE_CAPACITY) * 100);
 
-        const dayNum = document.createElement("div");
+        // 日期（左）＋ 剩餘名額（右）同一行
+        const dayNum = document.createElement("span");
         dayNum.className = "day-num" + (key === todayKey ? " today" : "");
-        dayNum.textContent = d + "日";
+        dayNum.textContent = d;
 
-        const seats = document.createElement("div");
-        seats.className = "seats";
-        if (isFull) {
-          seats.innerHTML = "已滿 (" + taken + "/" + BASE_CAPACITY + ")";
-          seats.className += " full";
-        } else {
-          seats.textContent = "剩餘名額 " + left + " / " + BASE_CAPACITY;
-        }
+        const holiday = isHoliday(key);
+        const seats = document.createElement("span");
+        seats.className = "seats" + (isFull || holiday ? " full" : "");
+        seats.textContent = holiday
+          ? "🚫 " + holidays[key]
+          : (isFull ? "已滿 (" + taken + "/" + BASE_CAPACITY + ")"
+                    : "剩餘名額 " + left + " / " + BASE_CAPACITY);
 
+        // 逐日剔選框
+        const dayCb = document.createElement("input");
+        dayCb.type = "checkbox";
+        dayCb.className = "day-cb";
+        dayCb.checked = !!selectedDates[key];
+        const past = isPastDate(key);
+        dayCb.disabled = isFull || holiday || past;
+        dayCb.onclick = (e) => { e.stopPropagation(); toggleDay(key, dayCb.checked); };
+
+        const dayLead = document.createElement("span");
+        dayLead.appendChild(dayCb);
+        dayLead.appendChild(dayNum);
+
+        const hdr = document.createElement("div");
+        hdr.className = "day-hdr";
+        hdr.appendChild(dayLead);
+        hdr.appendChild(seats);
+
+        // 名額格：一格代表一位學生，填滿即代表該日額滿
         const bar = document.createElement("div");
         bar.className = "bar";
-        const fill = document.createElement("i");
-        fill.style.width = pct + "%";
-        if (isFull) fill.className = "full";
-        else if (taken >= 5) fill.className = "warn";
-        bar.appendChild(fill);
-
-        if (showNames && roster.length > 0) {
-          const rl = document.createElement("div");
-          rl.className = "roster";
-          rl.innerHTML = roster.map(s => "<b>" + esc(s) + "</b>").join("、");
-          td.appendChild(rl);
+        for (let i = 0; i < BASE_CAPACITY; i++) {
+          const cell = document.createElement("i");
+          if (i < taken) cell.className = isFull ? "full" : (taken >= 5 ? "warn" : "on");
+          bar.appendChild(cell);
         }
 
-        td.appendChild(dayNum);
-        td.appendChild(seats);
+        td.appendChild(hdr);
         td.appendChild(bar);
-        if (roster.length > 0) {
+        if (showNames && !holiday && roster.length > 0) {
           const rl = document.createElement("div");
           rl.className = "roster";
-          rl.innerHTML = roster.map(nm => "<b>" + esc(nm) + "</b>").join("、");
+          rl.innerHTML = roster.map(o =>
+            '<b class="' + (o.pending ? "local" : "") + '" title="' +
+            (o.pending ? "未同步（前端記憶）" : "已同步") + '">' +
+            (o.pending ? "● " : "") + esc(o.name) + "</b>").join("");
           td.appendChild(rl);
         }
-        if (isFull && !selectedDates[key]) td.className = "disabled";
+        if (holiday) {
+          td.className = "disabled holiday";
+          td.title = "中心假期：" + holidays[key];
+        } else if (past) {
+          td.className = "disabled past";
+          td.title = "已過去的日期，不能報名";
+        } else if (isFull) {
+          td.className = "disabled";
+        } else {
+          td.className = "pickable" + (selectedDates[key] ? " picked" : "");
+          td.onclick = () => toggleDay(key, !selectedDates[key]);   // 撳格入面任何位置都可以剔
+        }
       }
       tr.appendChild(td);
     });
@@ -691,36 +1417,107 @@ function renderCal() {
   });
 }
 
-function toggleWeekday(wd) {
-  const cbs = document.querySelectorAll('#calBody input[type=checkbox]');
-  const list = [];
-  cbs.forEach(cb => { if (+cb.dataset.wd === wd) list.push(cb); });
-  const activatable = list.filter(cb => !cb.disabled);
-  if (activatable.length === 0) return;
-  const allChecked = activatable.every(cb => cb.checked);
-  activatable.forEach(cb => {
-    if (allChecked) {
-      cb.checked = false;
-      delete selectedDates[cb.value];
-    } else {
-      cb.checked = true;
-      selectedDates[cb.value] = true;
-    }
+// 當月某星期幾仍可報名的日期（額滿同假期都唔計）
+function openDatesOf(wd) {
+  return datesOfWeekdays(year, month, [wd])
+    .filter(k => !isHoliday(k) && !isPastDate(k) && takenOf(k) < BASE_CAPACITY);
+}
+
+// 剔選可以跨月份保留；只清走假期、已過去同已額滿嘅日子
+function pruneSelectedDates() {
+  Object.keys(selectedDates).forEach(k => {
+    if (isHoliday(k) || isPastDate(k) || takenOf(k) >= BASE_CAPACITY) delete selectedDates[k];
   });
   updatePickCount();
 }
 
+// 表頭剔選框狀態由當日的剔選情況推算：全剔 = checked，部分 = indeterminate
+function renderWeekdayHeaders() {
+  document.querySelectorAll("#cal th").forEach(th => {
+    const wd = +th.dataset.wd;
+    const cb = th.querySelector(".wd-cb");
+    const open = openDatesOf(wd);
+    const full = open.length === 0;
+    const picked = open.filter(k => selectedDates[k]).length;
+    cb.disabled = full;
+    cb.checked = !full && picked === open.length;
+    cb.indeterminate = picked > 0 && picked < open.length;
+    th.classList.toggle("picked", picked > 0);
+    th.classList.toggle("wd-full", full);
+    th.title = full ? "本月此星期幾已全部滿額" : "剔選＝全月，亦可喺日曆逐日剔";
+  });
+}
+
+// 表頭：一次過剔選／取消該星期幾全月仲有名額的日子
+function toggleWeekday(wd, on) {
+  const open = openDatesOf(wd);
+  if (!open.length) return;
+  open.forEach(k => { if (on) selectedDates[k] = true; else delete selectedDates[k]; });
+  renderCal();
+}
+
+// 逐日剔選／取消（已滿的日子唔俾剔）
+function toggleDay(key, on) {
+  if (isHoliday(key) || isPastDate(key) || takenOf(key) >= BASE_CAPACITY) return;
+  if (on) selectedDates[key] = true; else delete selectedDates[key];
+  renderCal();
+}
+
+// 點擊表頭任何位置都可剔選／取消；直接點剔選框時沿用剔選框的新狀態
 function hookWeekdayHeaders() {
-  const ths = document.querySelectorAll("#cal th");
-  ths.forEach(th => { th.onclick = () => toggleWeekday(+th.dataset.wd); });
+  document.querySelectorAll("#cal th").forEach(th => {
+    const cb = th.querySelector(".wd-cb");
+    th.onclick = (e) => {
+      if (cb.disabled) return;
+      const on = e.target === cb ? cb.checked : !cb.checked;
+      toggleWeekday(+th.dataset.wd, on);
+    };
+  });
+}
+
+/**
+ * 清除上一次報名嘅畫面資料：學生姓名、日曆剔選、報名結果同收據提示。
+ * 只係清畫面，唔會刪走已經寫咗入試算表或本機紀錄嘅報名。
+ */
+// 姓名格有內容，或者仲留住上一次報名結果，就顯示清除交叉
+function syncClearX() {
+  const x = document.getElementById("clearBtn");
+  if (!x) return;
+  const hasName = !!document.getElementById("studentName").value.trim();
+  const hasPrev = !!document.getElementById("result").innerHTML.trim()
+                  || Object.keys(selectedDates).length > 0;
+  x.hidden = !(hasName || hasPrev);
+}
+
+function clearEntry() {
+  selectedDates = {};
+  lastReceiptNo = null;
+  freshRegs = [];
+  document.getElementById("studentName").value = "";
+  document.getElementById("result").innerHTML = "";
+  document.getElementById("gotoReceiptBtn").disabled = true;
+  persistAll();
+  renderCal();
+  renderDataset();
+  syncClearX();
+  document.getElementById("studentName").focus();
 }
 
 function updatePickCount() {
-  document.getElementById("pickCount").textContent = "已揀選 " + Object.keys(selectedDates).length + " 天";
+  const keys = Object.keys(selectedDates).sort();
+  const byMonth = {};
+  keys.forEach(k => { const m = k.slice(0, 7); byMonth[m] = (byMonth[m] || 0) + 1; });
+  const months = Object.keys(byMonth).sort();
+  // 跨月份報名：列明每個月各揀咗幾多日
+  document.getElementById("pickCount").textContent = months.length > 1
+    ? "已剔選 " + keys.length + " 天（" + months.map(m => (+m.slice(5)) + "月 " + byMonth[m] + " 天").join("、") + "）"
+    : "已剔選 " + keys.length + " 天";
+  syncClearX();
 }
 
-function buildResult() {
-  const name = document.getElementById("studentName").value.trim();
+function buildResult(paidNow) {
+  const name = cleanName(document.getElementById("studentName").value);
+  document.getElementById("studentName").value = name;   // 即時顯示清理後的姓名
   const out = document.getElementById("result");
   if (!name) {
     out.innerHTML = '<div class="error">請輸入學生姓名。</div>';
@@ -728,7 +1525,15 @@ function buildResult() {
   }
   const dates = Object.keys(selectedDates).sort();
   if (dates.length === 0) {
-    out.innerHTML = '<div class="error">請至少揀選一個上課日期。</div>';
+    out.innerHTML = '<div class="error">請至少剔選一個上課的星期幾。</div>';
+    return;
+  }
+
+  // 假期唔可以報名
+  const hol = dates.filter(isHoliday);
+  if (hol.length > 0) {
+    out.innerHTML = '<div class="error">以下日期是中心假期，不能報名：</div><ul class="result-list">' +
+      hol.map(k => "<li>" + fmtKey(k) + "（" + esc(holidays[k]) + "）</li>").join("") + "</ul>";
     return;
   }
 
@@ -739,42 +1544,89 @@ function buildResult() {
       over.map(k => "<li>" + fmtKey(k) + "（已滿）</li>").join("") + "</ul>";
     return;
   }
+  openWait("提交報名中…", "正在寫入資料庫…", 2);   // 1 = 寫入、2 = 讀取確認
+  finishRegistration(name, dates, out, paidNow);
+}
+
 // 登記名額 (將學生姓名加入所揀日期的名單,並寫入報名紀錄)
-  // 同一批報名共享同一張收據編號
+// 同一批報名共享同一張收據編號
+function finishRegistration(name, dates, out, paidNow) {
   const now = new Date();
-  const receipt = { id: receipts.length + 1, receiptNo: nextReceiptNo(), name, ts: now, dates: dates.slice() };
-  receipts.push(receipt);
+  const fee = paidNow ? currentFee() : 0;
+  const receiptNo = tmpReceiptNo();   // 暫定；寫入成功後換成後端分配嘅正式編號
+
   dates.forEach(k => {
-    (baseRosters[k] = baseRosters[k] || []).push(name);
-    const rec = { id: registrations.length + 1, name, date: k, ts: now, receiptNo: receipt.receiptNo, recvFee: FEES_PER_CLASS, returnFee: 0, attend: 0 };
-    registrations.push(rec);
-    freshRegs.push(rec);
+    registrations.push({
+      id: registrations.length + 1, name, date: k, ts: now, receiptNo,
+      recvFee: fee, returnFee: 0, attend: 0
+    });
   });
+  // 待同步：一張收據一項，同步時一次過寫入資料庫
+  queueOp({ op: "add", receiptNo, name, dates: dates.slice(), paid: fee });
   selectedDates = {};
   persistAll();
 
+  out.innerHTML = '<div class="summary">⏳ 正在寫入資料庫…</div>';
 
-  const list = dates.map(k => fmtKey(k)).join("、");
-  out.innerHTML =
-    '<div class="ok">✅ 報名成功！收據編號 <b>' + receipt.receiptNo + '</b> 已發出：</div>' +
-    '<div class="summary">學生姓名：<b>' + esc(name) + '</b></div>' +
-    '<div class="summary">上課日期（共 ' + dates.length + ' 天）：</div>' +
-    '<ul class="result-list">' +
-    dates.map(k => "<li><b>" + fmtKey(k) + "</b>（星期一至五 · 功課輔導班）</li>").join("") +
-    '</ul>' +
-    '<div class="summary">多謝 ' + esc(name) + ' 選擇生命樹中心功課輔導班！</div>';
-
-  updatePickCount();
-  renderCal();
-  renderDataset();
-  renderReceiptToolbar();
-  buildReceiptSheet();
+  // 要等資料庫確認寫入咗，先當報名成功
+  manualSync({
+    wait: true,
+    title: "提交報名中…",
+    done: "報名已寫入資料庫，日曆已更新。",
+    onDone: (ok, why, results) => {
+      if (ok) {
+        // 後端喺鎖入面分配嘅正式編號（現有最大 + 1）
+        const added = (results || []).find(x => x.op === "add" && x.tmpReceiptNo === receiptNo)
+                   || (results || []).find(x => x.op === "add");
+        const realNo = (added && added.receiptNo) || receiptNo;
+        lastReceiptNo = realNo;
+        rctSeq = Math.max(rctSeq, +String(realNo).split("-")[1] || 0);
+        persistAll();
+        document.getElementById("gotoReceiptBtn").disabled = false;
+        out.innerHTML =
+          '<div class="ok">✅ 報名成功（已寫入資料庫）！收據編號 <b>' + realNo + '</b>（' +
+            (paidNow ? "已收款 HK$ " + (fee * dates.length) : "<b>未收款</b>") + '）</div>' +
+          '<div class="summary">學生姓名：<b>' + esc(name) + '</b>　·　共 <b>' + dates.length +
+            '</b> 天（' + fmtShort(dates[0]) +
+            (dates.length > 1 ? " 至 " + fmtShort(dates[dates.length - 1]) : "") + '）</div>' +
+          '<div class="summary">收據已產生，可到「付款及退款處理」列印。</div>';
+      } else {
+        document.getElementById("gotoReceiptBtn").disabled = true;
+        out.innerHTML =
+          '<div class="error">⚠️ 報名未完成：資料<b>未有寫入資料庫</b>。</div>' +
+          '<div class="summary"><b>' + esc(name) + '・' + dates.length +
+            ' 天</b>已暫存喺前端，日曆上以琥珀色標示「未同步」；收據編號要寫入成功先會由系統分配。</div>' +
+          '<div class="summary">' + (why === "duplicate"
+            ? "原因：資料庫已經有同一位學生同一日的報名，請先到試算表處理。"
+            : why === "stale-backend"
+              ? "原因：後端仲係舊版本，請重新部署 Apps Script 新版本。"
+              : "請撳左下角「手動同步」重試；成功之後先當報名完成。") + '</div>';
+      }
+      updatePickCount();
+      refreshAll();
+    }
+  });
 }
 
 // ===== 收據產生器 / Receipt Builder =====
 
+// 收據頁自己揀月份（預設今個月），同日曆嘅月份分開
+function thisMonthPrefix() {
+  const t = new Date();
+  return t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0");
+}
+
+function receiptMonthPrefix() {
+  const el = document.getElementById("rbMonth");
+  if (el && !el.value) el.value = thisMonthPrefix();
+  return (el && el.value) || thisMonthPrefix();
+}
+
+// 以收據所涵蓋的「上課月份」過濾，而唔係建立時間
+// （用建立時間的話，今個月開單、下個月上堂的收據會即刻喺清單消失）
 function inActiveMonth(r) {
-  return r.ts.getFullYear() === year && r.ts.getMonth() === month;
+  const prefix = receiptMonthPrefix() + "-";
+  return r.dates.some(d => d.startsWith(prefix));
 }
 
 function renderReceiptToolbar() {
@@ -783,11 +1635,13 @@ function renderReceiptToolbar() {
   sel.innerHTML = "";
 
   // 只列出「當前活躍月份」內建立的收據 (不輸入日期，直接以日曆當前月份過濾)
-  const monthList = receipts.filter(inActiveMonth).sort((a, b) => b.ts - a.ts); // 最新批次置頂
+  const monthList = allReceipts().filter(inActiveMonth)
+    .sort((a, b) => String(b.ts).localeCompare(String(a.ts))); // 最新批次置頂
   monthList.forEach(r => {
     const o = document.createElement("option");
     o.value = r.receiptNo;
-    o.textContent = r.receiptNo + " · " + r.name + "（" + r.dates.length + "堂）· " + fmtTs(r.ts);
+    o.textContent = (isTmpReceipt(r.receiptNo) ? "（待分配）" : r.receiptNo) + " · " + r.name + "（" + r.dates.length + "堂）· " +
+      (r.paid ? "已收款" : "未收款") + (r.pending ? " · 未同步" : "");
     sel.appendChild(o);
   });
 
@@ -798,84 +1652,555 @@ function renderReceiptToolbar() {
     else sel.value = latest.receiptNo;
   }
 
-  document.getElementById("rbCount").textContent = "共 " + monthList.length + " 張收據（" + year + "年" + MONTH_NAMES[month] + "）";
+  const mp = receiptMonthPrefix().split("-");
+  document.getElementById("rbCount").textContent =
+    "共 " + monthList.length + " 張收據（" + mp[0] + "年" + MONTH_NAMES[+mp[1] - 1] + "）";
+  const unpaid = monthList.filter(r => !r.paid).length;
+  document.getElementById("rbHint").innerHTML = unpaid
+    ? "本月尚有 <b>" + unpaid + "</b> 張收據未收款；按「列印收據」時可確認收款。"
+    : "本月所有收據已收款。";
+}
+
+// 現時揀中的收據批次（搵唔到就當冇）
+function currentReceipt() {
+  const list = allReceipts();
+  if (!list.length) return null;
+  const sel = document.getElementById("receiptSelect");
+  const receiptNo = sel.value || list[list.length - 1].receiptNo;
+  return list.find(x => x.receiptNo === receiptNo) || null;
+}
+
+// 收據的每堂學費：已收款用收款當時的金額，未收款跟住現時輸入的學費
+function feeOf(r) {
+  return r.paid ? (r.fee || 0) : (+document.getElementById("feeInput").value || 0);
+}
+
+// 收據內容（畫面預覽同列印共用）
+function receiptHtml(r) {
+  const fee = feeOf(r);
+  const classes = r.dates.length;
+  const total = fee * classes;
+
+  const dl = (k, v) => "<dt>" + k + "</dt><dd>" + v + "</dd>";
+
+  let html = '<div class="receipt">';
+  html += '<div class="rc-title">生命樹教育中心（沙田）</div>';
+  html += '<div class="rc-sub">小學功課輔導班 收據</div>';
+  html += '<dl class="rc-meta">' +
+    dl("收據編號", r.receiptNo) +
+    dl("學生姓名", esc(r.name)) +
+    dl("報名時間", tsText(r.ts)) +
+    "</dl>";
+  html += '<hr class="rc-divider">';
+  r.dates.forEach((d, i) => {
+    html += '<div class="rc-line"><span>' + (i + 1) + ". " + fmtKey(d) + '</span><span class="amt">HK$ ' + fee + "</span></div>";
+  });
+  html += '<hr class="rc-divider">';
+  html += '<div class="rc-line rc-total"><span>合計<small>' + classes + " 堂 × HK$ " + fee + '</small></span><span class="amt">HK$ ' + total + "</span></div>";
+  html += "</div>";
+  return html;
 }
 
 function buildReceiptSheet() {
   const sheet = document.getElementById("receiptSheet");
-  if (!receipts.length) {
-    sheet.innerHTML = '<div class="error">尚無任何報名紀錄。</div>';
-    return;
+  const r = currentReceipt();
+  sheet.innerHTML = r ? receiptHtml(r) : '<div class="error">尚無任何報名紀錄。</div>';
+}
+
+// 列印用的獨立樣式表：唔繼承主頁面任何 CSS，尺寸全部用 mm / pt 跟足 A4
+const PRINT_CSS = [
+  // @page margin 設為 0，瀏覽器就冇位畫頁首／頁尾（日期、標題、網址、頁碼全部唔會印出）
+  // 真正的 15mm 邊距改由 body padding 提供，內容照樣距離紙邊 15mm
+  '@page { size: A4 portrait; margin: 0; }',
+  '* { box-sizing: border-box; margin: 0; padding: 0; }',
+  'html { width: 210mm; }',
+  'body { width: 210mm; padding: 15mm; background: #fff; color: #000;',
+  '  font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; }',
+  '.receipt { width: 180mm; font-size: 11pt; line-height: 1.5; }',
+  '.rc-title { text-align: center; font-size: 17pt; font-weight: bold; }',
+  '.rc-sub { text-align: center; font-size: 10pt; margin: 1mm 0 6mm; }',
+  '.rc-meta { display: grid; grid-template-columns: auto 1fr; gap: 1.5mm 8mm; font-size: 10.5pt; }',
+  '.rc-divider { border: 0; border-top: 0.3mm solid #000; margin: 5mm 0; }',
+  '.rc-line { display: flex; justify-content: space-between; gap: 6mm;',
+  '  padding: 0.7mm 0; line-height: 1.35; page-break-inside: avoid; }',
+  '.rc-line .amt { white-space: nowrap; font-variant-numeric: tabular-nums; }',
+  '.rc-total { font-weight: bold; font-size: 13pt; }',
+  '.rc-total small { font-weight: normal; font-size: 9.5pt; margin-left: 2mm; }'
+].join("\n");
+
+// 用一個隱藏 iframe 印一份乾淨的收據文件：
+// 主頁面的版面（側邊欄、卡片、flex 等）完全唔會影響列印比例
+function printReceiptDoc(r) {
+  const f = document.createElement("iframe");
+  f.setAttribute("aria-hidden", "true");
+  f.style.cssText = "position:fixed; right:0; bottom:0; width:0; height:0; border:0; visibility:hidden;";
+  document.body.appendChild(f);
+  const d = f.contentDocument;
+  d.open();
+  d.write('<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8">' +
+          '<title>收據 ' + r.receiptNo + '</title><style>' + PRINT_CSS + '</style></head><body>' +
+          receiptHtml(r) + '</body></html>');
+  d.close();
+  const go = () => {
+    f.contentWindow.focus();
+    f.contentWindow.print();
+    setTimeout(() => f.remove(), 2000);
+  };
+  if (d.readyState === "complete") setTimeout(go, 50); else f.onload = go;
+}
+
+// ===== 分頁切換 =====
+
+function showPanel(name) {
+  document.querySelectorAll(".panel").forEach(pan =>
+    pan.classList.toggle("active", pan.dataset.panel === name));
+  document.querySelectorAll(".tab-btn").forEach(b =>
+    b.classList.toggle("active", b.dataset.tab === name));
+  if (name === "att") renderAttPanel();
+  if (name === "pay") renderRefPanel();
+  if (name === "hol") renderHolPanel();
+}
+
+// 報名成功後，一撳就跳去付款頁並自動揀返嗰張收據
+function gotoReceipt(no) {
+  showPanel("pay");
+  // 跳去該張收據所屬嘅月份，否則會唔喺清單入面
+  const r = no && allReceipts().find(x => x.receiptNo === no);
+  if (r && r.dates.length) {
+    document.getElementById("rbMonth").value = r.dates[0].slice(0, 7);
   }
+  renderReceiptToolbar();
   const sel = document.getElementById("receiptSelect");
-  const receiptNo = sel.value || receipts[receipts.length - 1].receiptNo;
-  const r = receipts.find(x => x.receiptNo === receiptNo);
-  const fee = +document.getElementById("feeInput").value || 0;
-  const classes = r.dates.length;
-  const total = fee * classes;
+  if (no && [...sel.options].some(o => o.value === no)) sel.value = no;
+  buildReceiptSheet();
+}
 
-  const th = (t) => '<td class="colletter">' + t + "</td>";
-  const L = (t) => '<td class="label">' + t + "</td>";
-  const V = (t) => "<td>" + t + "</td>";
+// ===== 收款確認 =====
 
-  let html = '<table class="excel">';
-  html += '<tr>' + th("A") + th("B") + th("C") + th("D") + th("E") + th("F") + "</tr>";
-  html += '<tr><td class="title" colspan="6">生命樹中心 · 功課輔導班 收據</td></tr>';
-  html += "<tr>" + L("收據編號") + '<td colspan="2">' + r.receiptNo + "</td>" + L("班別") + '<td colspan="2">功課輔導班（星期一至五）</td></tr>';
-  html += "<tr>" + L("學生姓名") + '<td colspan="2">' + esc(r.name) + "</td>" + L("報名時間") + '<td colspan="2">' + fmtTs(r.ts) + "</td></tr>";
-  html += "<tr>" + L("每堂學費") + '<td colspan="2">HK$ ' + fee + "</td>" + L("課堂堂數") + '<td colspan="2">' + classes + " 堂</td></tr>";
-
-  // 上課日期清單 (每堂一行)
-  r.dates.forEach((d, i) => {
-    const label = i === 0 ? "上課日期" : "";
-    const style = i === 0 ? 'class="label"' : "";
-    html += "<tr><td " + style + ' rowspan="' + classes + '">' + label + "</td>" + V(i + 1) + V(fmtKey(d)) + "</td><td></td><td></td><td></td></tr>";
+// 確認收款：寫入收據及每一筆報名紀錄的「收到費用」
+function markReceiptPaid(r) {
+  if (!r || r.paid) return;
+  const fee = currentFee();
+  registrations.forEach(x => { if (x.receiptNo === r.receiptNo) x.recvFee = fee; });
+  // 試算表嗰邊嘅行：先寫入前端記憶，等手動同步先送出
+  allRows().forEach(x => {
+    if (x.receiptNo === r.receiptNo && x.src === "sheet") setLocalEdit(x.key, { recvFee: fee });
   });
+  queueOp({ op: "pay", receiptNo: r.receiptNo, fee: fee });
+  persistAll();
+  refreshAll();
+  manualSync({
+    wait: true, title: "更新收款中…", done: "收款狀態已寫入資料庫。",
+    onDone: (ok) => {
+      if (!ok) document.getElementById("rbHint").innerHTML =
+        '<b class="unsynced">⚠️ 收款狀態未寫入資料庫，請撳「手動同步」重試。</b>';
+    }
+  });
+}
 
-  html += '<tr><td class="total" colspan="2">合計金額（收取）</td>' +
-    '<td class="total num-right">HK$ ' + total + "</td>" +
-    '<td class="total">（' + classes + " 堂 × HK$ " + fee + "）</td><td></td><td></td></tr>";
-  html += "</table>";
-  sheet.innerHTML = html;
+function closePayModal() {
+  document.getElementById("payModal").hidden = true;
+}
+
+// 按「列印收據」：未收款的先問一句，已收款的直接列印
+function onPrintReceipt() {
+  const r = currentReceipt();
+  if (!r) return;
+  if (r.paid) { printReceiptDoc(r); return; }
+  const fee = +document.getElementById("feeInput").value || 0;
+  document.getElementById("payModalMsg").innerHTML =
+    "收據 <b>" + r.receiptNo + "</b>（" + esc(r.name) + "・" + r.dates.length + " 堂・合計 HK$ " +
+    (fee * r.dates.length) + "）<br>是否已經收到款項？";
+  document.getElementById("payModal").hidden = false;
+  document.getElementById("payYesBtn").focus();
 }
 
 function renderAttPanel() {
   const dateIn = document.getElementById("attDate");
+  // 未選日期時默認今天
   if (!dateIn.value) dateIn.value = attTodayKey();
   const k = dateIn.value;
-  const roster = registrations.filter(r => r.date === k);
+
+  // 日期旁顯示星期幾（取代原本的日期快捷鍵）
+  document.getElementById("attWd").textContent = k ? "（" + WD[dayOfKey(k).getDay()] + "）" : "";
+
+  const roster = allRows().filter(r => r.date === k)
+    .sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
   const tbody = document.getElementById("attBody");
   tbody.innerHTML = "";
   if (!roster.length) {
-    tbody.innerHTML = '<tr><td colspan="2" class="empty">當日未有學生報名。</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="2" class="empty">當日沒有學生報名。</td></tr>';
     document.getElementById("attCount").textContent = "0 位學生";
+    document.getElementById("attSaveBtn").disabled = true;
+    document.getElementById("attAllBtn").disabled = true;
+    document.getElementById("attAllBtn").textContent = "全選";
     return;
   }
+  document.getElementById("attSaveBtn").disabled = false;
+  // 勾選只是草稿，按「確認點名」才寫入報名紀錄
   roster.forEach(r => {
     const tr = document.createElement("tr");
+    if (isPending(r)) tr.className = "unsynced";
     const tdName = document.createElement("td");
-    tdName.textContent = r.name;
+    tdName.innerHTML = esc(r.name) + (isPending(r) ? '<span class="tag-local">未同步</span>' : "");
     const tdAtt = document.createElement("td");
     tdAtt.className = "num";
     const cb = document.createElement("input");
     cb.type = "checkbox";
     cb.checked = !!r.attend;
-    cb.dataset.rid = r.id;
-    cb.onchange = () => {
-      r.attend = cb.checked ? 1 : 0;
-      updateAttCount(roster);
-    };
+    cb.dataset.key = r.key;
+    cb.dataset.rct = r.receiptNo;
+    cb.onchange = () => updateAttCount();
     tdAtt.appendChild(cb);
+    tr.onclick = (e) => { if (e.target !== cb) { cb.checked = !cb.checked; updateAttCount(); } };
     tr.appendChild(tdName);
     tr.appendChild(tdAtt);
     tbody.appendChild(tr);
   });
-  updateAttCount(roster);
+  updateAttCount();
 }
 
-function updateAttCount(roster) {
-  const n = roster.reduce((a, r) => a + (r.attend ? 1 : 0), 0);
-  document.getElementById("attCount").textContent = "出席 " + n + " / " + roster.length + " 位學生";
+function updateAttCount() {
+  const cbs = [...document.querySelectorAll("#attBody input[type=checkbox]")];
+  const n = cbs.filter(cb => cb.checked).length;
+  document.getElementById("attCount").textContent = "已勾選出席 " + n + " / " + cbs.length + " 位學生";
+  // 表頭按鈕：未全剔 = 全選；已全剔 = 全部取消
+  const allBtn = document.getElementById("attAllBtn");
+  allBtn.disabled = cbs.length === 0;
+  allBtn.textContent = (cbs.length > 0 && n === cbs.length) ? "全部取消" : "全選";
+}
+
+// 一次過剔選／取消當日所有學生（仍然係草稿，要按「確認點名」先寫入）
+function toggleAttAll() {
+  const cbs = [...document.querySelectorAll("#attBody input[type=checkbox]")];
+  if (!cbs.length) return;
+  const on = !cbs.every(cb => cb.checked);
+  cbs.forEach(cb => { cb.checked = on; });
+  updateAttCount();
+}
+
+// ===== 假期管理 =====
+// 試算表為準：開頁同每次改動之後都會拉一次「中心假期」覆蓋本機。
+
+let holSyncNote = "";
+
+// 刷新：重新由試算表讀一次假期（唔係淨係重畫畫面）
+function refreshHolidays() {
+  const btn = document.getElementById("holRefreshBtn");
+  const msg = document.getElementById("holMsg");
+  if (!GFORM.webapp) {
+    msg.textContent = "本機模式，冇後端可讀。";
+    renderHolPanel();
+    return;
+  }
+  btn.disabled = true;
+  const label = btn.textContent;
+  btn.textContent = "讀取中…";
+  msg.textContent = "";
+  loadHolidays(() => {
+    btn.disabled = false;
+    btn.textContent = label;
+    msg.textContent = holSyncNote.indexOf("失敗") >= 0
+      ? "⚠️ 試算表讀取失敗，暫用本機假期。"
+      : "✅ 已由試算表重新讀取。";
+  });
+}
+
+function loadHolidays(cb) {
+  if (!GFORM.webapp) { holSyncNote = "本機模式"; if (cb) cb(); return; }
+  jsonpGet({ action: "holidays" }, (d) => {
+    if (d && d.ok && d.holidays) {
+      holidays = d.holidays;
+      applyPendingHolidays();   // 未同步嘅假期改動唔可以被試算表蓋走
+      persistAll();
+      renderCal();
+      holSyncNote = "已同步試算表 " + fmtTs(new Date());
+    } else {
+      holSyncNote = "試算表讀取失敗，暫用本機假期";
+    }
+    renderHolPanel();
+    if (cb) cb();
+  });
+}
+
+// 未同步嘅假期改動（同步之前，畫面一律以前端記憶為準）
+function applyPendingHolidays() {
+  syncQueue.forEach(op => {
+    if (op.op === "setHoliday") {
+      if (op.old && op.old !== op.date) delete holidays[op.old];
+      holidays[op.date] = op.name;
+    } else if (op.op === "delHoliday") {
+      delete holidays[op.date];
+    }
+  });
+}
+
+// 呢個假期日期係咪仲未同步
+function holPending(k) {
+  return syncQueue.some(op => (op.op === "setHoliday" || op.op === "delHoliday") && op.date === k);
+}
+
+function renderHolPanel() {
+  const dateIn = document.getElementById("holDate");
+  document.getElementById("holWd").textContent =
+    dateIn.value ? "（" + WD[dayOfKey(dateIn.value).getDay()] + "）" : "";
+
+  const keys = Object.keys(holidays).sort();
+  document.getElementById("holCount").textContent =
+    "共 " + keys.length + " 個假期" + (holSyncNote ? " · " + holSyncNote : "");
+
+  const tbody = document.getElementById("holBody");
+  tbody.innerHTML = "";
+  if (!keys.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="empty">尚未設定任何假期。</td></tr>';
+    return;
+  }
+  keys.forEach(k => {
+    const tr = document.createElement("tr");
+    if (holPending(k)) tr.className = "unsynced";
+    const tdDate = document.createElement("td");
+    tdDate.innerHTML = esc(fmtKey(k)) + (holPending(k) ? '<span class="tag-local">未同步</span>' : "");
+    const tdName = document.createElement("td");
+    tdName.textContent = holidays[k];
+
+    // 提示：假期當日如果本身已有報名紀錄，紀錄唔會自動刪除
+    const n = allRows().filter(r => r.date === k).length;
+    const tdWarn = document.createElement("td");
+    if (n) {
+      tdWarn.className = "hol-warn";
+      tdWarn.textContent = n + " 筆（需人手處理）";
+    } else {
+      tdWarn.className = "num";
+      tdWarn.textContent = "—";
+    }
+
+    const tdAct = document.createElement("td");
+    tdAct.className = "num";
+    const edit = document.createElement("button");
+    edit.type = "button"; edit.className = "row-act edit"; edit.textContent = "修改";
+    edit.onclick = () => startEditHoliday(k);
+    const del = document.createElement("button");
+    del.type = "button"; del.className = "row-act del"; del.textContent = "刪除";
+    del.onclick = () => deleteHoliday(k);
+    tdAct.appendChild(edit); tdAct.appendChild(del);
+
+    tr.appendChild(tdDate); tr.appendChild(tdName); tr.appendChild(tdWarn); tr.appendChild(tdAct);
+    tbody.appendChild(tr);
+  });
+}
+
+function holFormReset() {
+  holEditKey = null;
+  document.getElementById("holDate").value = "";
+  document.getElementById("holName").value = "";
+  document.getElementById("holSaveBtn").textContent = "新增假期";
+  document.getElementById("holCancelBtn").hidden = true;
+  renderHolPanel();
+}
+
+function startEditHoliday(k) {
+  holEditKey = k;
+  document.getElementById("holDate").value = k;
+  document.getElementById("holName").value = holidays[k];
+  document.getElementById("holSaveBtn").textContent = "儲存修改";
+  document.getElementById("holCancelBtn").hidden = false;
+  document.getElementById("holMsg").textContent = "修改緊 " + fmtKey(k);
+  renderHolPanel();
+}
+
+function saveHoliday() {
+  const d = document.getElementById("holDate").value;
+  const name = document.getElementById("holName").value.trim() || "中心假期";
+  const msg = document.getElementById("holMsg");
+  if (!d) { msg.textContent = "請先揀假期日期。"; return; }
+  // 改咗日期就當搬位：刪走舊嗰日
+  const oldKey = holEditKey;                 // holFormReset 會清走，要先留低
+  if (oldKey && oldKey !== d) delete holidays[oldKey];
+  const isNew = !isHoliday(d);
+  holidays[d] = name;
+  persistAll();
+  holFormReset();
+  renderCal();
+  const verb = (oldKey || !isNew) ? "✅ 已更新 " : "✅ 已新增 ";
+  queueOp({ op: "setHoliday", date: d, name: name, old: oldKey || "" });
+  renderSyncState();
+  renderHolPanel();
+  msg.textContent = "⏳ 正在寫入資料庫…";
+  manualSync({
+    wait: true, title: "更新假期中…", done: "假期已寫入資料庫。",
+    onDone: (ok) => {
+      msg.textContent = ok ? verb + fmtKey(d) + "：" + name
+                           : "⚠️ 未寫入資料庫，假期暫存喺前端，請撳「手動同步」重試。";
+    }
+  });
+}
+
+function deleteHoliday(k) {
+  const name = holidays[k];
+  const msg = document.getElementById("holMsg");
+  delete holidays[k];
+  if (holEditKey === k) holFormReset();
+  persistAll();
+  renderHolPanel();
+  renderCal();
+  queueOp({ op: "delHoliday", date: k });
+  renderSyncState();
+  msg.textContent = "⏳ 正在寫入資料庫…";
+  manualSync({
+    wait: true, title: "更新假期中…", done: "假期已寫入資料庫。",
+    onDone: (ok) => {
+      msg.textContent = ok ? "🗑 已刪除 " + fmtKey(k) + "：" + name
+                           : "⚠️ 未寫入資料庫，刪除暫存喺前端，請撳「手動同步」重試。";
+    }
+  });
+}
+
+// ===== 退款處理 =====
+
+function renderRefPanel() {
+  const dateIn = document.getElementById("refDate");
+  if (!dateIn.value) dateIn.value = attTodayKey();
+  const k = dateIn.value;
+  document.getElementById("refWd").textContent = k ? "（" + WD[dayOfKey(k).getDay()] + "）" : "";
+
+  // 當日全部報名都列出嚟做參考；已退款／未收款嗰啲只顯示，唔俾勾
+  const rows = allRows()
+    .filter(r => r.date === k)
+    .sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
+
+  const tbody = document.getElementById("refBody");
+  tbody.innerHTML = "";
+  const allBtn = document.getElementById("refAllBtn");
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty">當日沒有報名紀錄。</td></tr>';
+    document.getElementById("refCount").textContent = "0 筆";
+    document.getElementById("refSaveBtn").disabled = true;
+    allBtn.disabled = true;
+    allBtn.textContent = "全選";
+    return;
+  }
+
+  let refundable = 0;
+  rows.forEach(r => {
+    const unpaid   = !(r.recvFee > 0);            // 未收款：冇錢收過，冇得退
+    const refunded = r.recvFee > 0 && r.returnFee >= r.recvFee;   // 已退足
+    const canRefund = !unpaid && !refunded;
+    if (canRefund) refundable++;
+
+    const tr = document.createElement("tr");
+    const cls = [];
+    if (isPending(r)) cls.push("unsynced");
+    if (!canRefund) cls.push("ref-locked");
+    tr.className = cls.join(" ");
+
+    const tdName = document.createElement("td");
+    tdName.innerHTML = esc(r.name) + (isPending(r) ? '<span class="tag-local">未同步</span>' : "");
+    const tdRct = document.createElement("td");
+    tdRct.className = "rct";
+    tdRct.textContent = r.receiptNo;
+
+    const tdFee = document.createElement("td");
+    tdFee.className = "num";
+    tdFee.textContent = r.recvFee > 0 ? "$ " + r.recvFee : "—";
+
+    const tdState = document.createElement("td");
+    if (unpaid) {
+      tdState.innerHTML = '<span class="ref-state unpaid">未收款</span>';
+    } else if (refunded) {
+      tdState.innerHTML = '<span class="ref-state done">已退款 $ ' + r.returnFee + '</span>';
+    } else if (r.returnFee > 0) {
+      tdState.innerHTML = '<span class="ref-state part">已退 $ ' + r.returnFee +
+                          '，餘 $ ' + (r.recvFee - r.returnFee) + '</span>';
+    } else {
+      tdState.innerHTML = '<span class="ref-state ok">可退 $ ' + r.recvFee + '</span>';
+    }
+
+    const tdCb = document.createElement("td");
+    tdCb.className = "num";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.disabled = !canRefund;
+    cb.title = unpaid ? "未收款，冇得退" : (refunded ? "已經退咗款" : "");
+    cb.dataset.key = r.key;
+    cb.dataset.rct = r.receiptNo;
+    cb.dataset.amt = r.recvFee - r.returnFee;
+    cb.dataset.recv = r.recvFee;
+    cb.onchange = () => updateRefCount();
+    tdCb.appendChild(cb);
+
+    if (canRefund) {
+      tr.onclick = (e) => { if (e.target !== cb) { cb.checked = !cb.checked; updateRefCount(); } };
+    }
+
+    tr.appendChild(tdName); tr.appendChild(tdRct); tr.appendChild(tdFee);
+    tr.appendChild(tdState); tr.appendChild(tdCb);
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById("refSaveBtn").disabled = refundable === 0;
+  updateRefCount();
+}
+
+// 只計可退款嗰啲；已退款／未收款嘅 checkbox 係 disabled，一律唔計入分母
+function refundableBoxes() {
+  return [...document.querySelectorAll("#refBody input[type=checkbox]")].filter(cb => !cb.disabled);
+}
+
+function updateRefCount() {
+  const cbs = refundableBoxes();
+  const picked = cbs.filter(cb => cb.checked);
+  const amt = picked.reduce((sum, cb) => sum + (+cb.dataset.amt || 0), 0);
+  const total = document.querySelectorAll("#refBody input[type=checkbox]").length;
+  const locked = total - cbs.length;
+  document.getElementById("refCount").textContent =
+    "已勾選 " + picked.length + " / " + cbs.length + " 筆可退款" +
+    (locked ? "（另有 " + locked + " 筆已退款或未收款）" : "") +
+    (amt ? "，合共 HK$ " + amt : "");
+  const allBtn = document.getElementById("refAllBtn");
+  allBtn.disabled = cbs.length === 0;
+  allBtn.textContent = (cbs.length > 0 && picked.length === cbs.length) ? "全部取消" : "全選";
+}
+
+function toggleRefAll() {
+  const cbs = refundableBoxes();          // 全選只會揀可退款嗰啲
+  if (!cbs.length) return;
+  const on = !cbs.every(cb => cb.checked);
+  cbs.forEach(cb => { cb.checked = on; });
+  updateRefCount();
+}
+
+// 確認退款：將該堂已收的學費全數記入「退回費用」
+function saveRef() {
+  const picked = refundableBoxes().filter(cb => cb.checked);
+  if (!picked.length) {
+    document.getElementById("refSaveMsg").textContent = "請先勾選要退款的學生。";
+    return;
+  }
+  let amt = 0;
+  const names = new Set();
+  picked.forEach(cb => {
+    const key = cb.dataset.key;
+    const date = key.split("|")[1];
+    amt += +cb.dataset.amt || 0;
+    setLocalEdit(key, { returnFee: +cb.dataset.recv || 0 });
+    const local = registrations.find(x => x.receiptNo === cb.dataset.rct && x.date === date);
+    if (local) local.returnFee = local.recvFee;
+    names.add(cb.closest("tr").cells[0].textContent.replace("未同步", ""));
+    queueOp({ op: "refund", receiptNo: cb.dataset.rct, date: date });
+  });
+  persistAll();
+  const d = document.getElementById("refDate").value;
+  refreshAll();
+  const refMsg = document.getElementById("refSaveMsg");
+  refMsg.textContent = "⏳ 正在寫入資料庫…";
+  manualSync({
+    wait: true, title: "處理退款中…", done: "退款已寫入資料庫。",
+    onDone: (ok) => {
+      refMsg.textContent = ok
+        ? "✅ 已為 " + names.size + " 位學生辦理 " + fmtKey(d) + " 的退款，合共 HK$ " + amt
+        : "⚠️ 未寫入資料庫，退款暫存喺前端，請撳「手動同步」重試。";
+    }
+  });
 }
 
 function attTodayKey() {
@@ -883,10 +2208,39 @@ function attTodayKey() {
   return t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0");
 }
 
+// 確認點名：把勾選結果寫入報名紀錄並儲存
 function saveAtt() {
-  persistRegistrations();
-  renderDataset();
-  document.getElementById("attHint").textContent = "✅ 點名已儲存。";
+  const cbs = [...document.querySelectorAll("#attBody input[type=checkbox]")];
+  if (!cbs.length) return;
+  const k = document.getElementById("attDate").value;
+  cbs.forEach(cb => {
+    const val = cb.checked ? 1 : 0;
+    const key = cb.dataset.key;
+    const date = key.split("|")[1];
+    setLocalEdit(key, { attend: val });
+    const local = registrations.find(x => x.receiptNo === cb.dataset.rct && x.date === date);
+    if (local) local.attend = val;
+    queueOp({ op: "attend", receiptNo: cb.dataset.rct, date: date, value: val });
+  });
+  persistAll();
+  refreshAll();
+  const n = cbs.filter(cb => cb.checked).length;
+  const msg = document.getElementById("attSaveMsg");
+  msg.textContent = "⏳ 正在寫入資料庫…";
+  manualSync({
+    wait: true, title: "儲存點名中…", done: "點名已寫入資料庫。",
+    onDone: (ok) => {
+      msg.textContent = ok
+        ? "✅ 已寫入資料庫：" + (k ? fmtKey(k) : "") + " 出席 " + n + " / " + cbs.length
+        : "⚠️ 未寫入資料庫，點名暫存喺前端，請撳「手動同步」重試。";
+    }
+  });
+}
+
+// 簡短日期：10月5日（成功訊息用，唔再逐日列出）
+function fmtShort(k) {
+  const p = k.split("-");
+  return (+p[1]) + "月" + (+p[2]) + "日";
 }
 
 function fmtKey(k) {
@@ -896,29 +2250,42 @@ function fmtKey(k) {
 }
 const WD = ["星期日","星期一","星期二","星期三","星期四","星期五","星期六"];
 
+// 姓名：去掉前後空白（連全形空格），中間連續空白收成一個
+function cleanName(v) {
+  return String(v == null ? "" : v)
+    .replace(/[\s\u3000]+/g, " ")
+    .trim();
+}
+
 function esc(s) {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 document.addEventListener("DOMContentLoaded", () => {
   initSelectors();
-  refreshLabel();
   // ----- dashboard: sidebar tab switching -----
-  const tabBtns = document.querySelectorAll('.tab-btn');
-  const showPanel = (name) => {
-    document.querySelectorAll('.panel').forEach(pan =>
-      pan.classList.toggle('active', pan.dataset.panel === name));
-    tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === name));
-  };
-  tabBtns.forEach(b => b.addEventListener('click', () => {
-    showPanel(b.dataset.tab);
-    const pans = document.querySelectorAll('.panel.show-names-active, .panel[data-panel=' + b.dataset.tab + ']');
-    if (b.dataset.tab === "att") renderAttPanel();
-  }));
+  document.querySelectorAll('.tab-btn').forEach(b =>
+    b.addEventListener('click', () => showPanel(b.dataset.tab)));
   showPanel('reg');
-  document.getElementById("attDate").onchange = renderAttPanel;
-  document.getElementById("attRefreshBtn").onclick = renderAttPanel;
+  const clearAttMsg = () => { document.getElementById("attSaveMsg").textContent = ""; renderAttPanel(); };
+  document.getElementById("attDate").onchange = clearAttMsg;
+  document.getElementById("attRefreshBtn").onclick = clearAttMsg;
   document.getElementById("attSaveBtn").onclick = saveAtt;
+  document.getElementById("attAllBtn").onclick = toggleAttAll;
+  const clearRefMsg = () => { document.getElementById("refSaveMsg").textContent = ""; renderRefPanel(); };
+  document.getElementById("refDate").onchange = clearRefMsg;
+  document.getElementById("refRefreshBtn").onclick = clearRefMsg;
+  document.getElementById("refAllBtn").onclick = toggleRefAll;
+  document.getElementById("refSaveBtn").onclick = saveRef;
+  document.getElementById("holSaveBtn").onclick = saveHoliday;
+  document.getElementById("holCancelBtn").onclick = holFormReset;
+  document.getElementById("holDate").onchange = renderHolPanel;
+  document.getElementById("holRefreshBtn").onclick = refreshHolidays;
+  renderHolPanel();
+  loadHolidays();       // 假期：開頁讀一次（唔會寫入）
+  loadSheet();          // 報名資料：開頁讀一次，之後一律靠手動同步
+  document.getElementById("gotoReceiptBtn").onclick = () => gotoReceipt(lastReceiptNo);
+  renderRefPanel();
   renderAttPanel();
 
   renderCal();
@@ -927,10 +2294,47 @@ document.addEventListener("DOMContentLoaded", () => {
   renderReceiptToolbar();
   buildReceiptSheet();
   hookWeekdayHeaders();
+  document.getElementById("rbMonth").value = thisMonthPrefix();
+  document.getElementById("rbMonth").onchange = () => { renderReceiptToolbar(); buildReceiptSheet(); };
   document.getElementById("receiptSelect").onchange = () => buildReceiptSheet();
   document.getElementById("feeInput").onchange = () => buildReceiptSheet();
-  document.getElementById("printReceiptBtn").onclick = () => window.print();
-  document.getElementById("appForm").onsubmit = (e) => { e.preventDefault(); buildResult(); };
+  document.getElementById("printReceiptBtn").onclick = onPrintReceipt;
+  document.getElementById("payYesBtn").onclick = () => {
+    const r = currentReceipt();
+    markReceiptPaid(r);
+    closePayModal();
+    printReceiptDoc(r);
+  };
+  document.getElementById("payNoBtn").onclick = () => {
+    const r = currentReceipt();
+    closePayModal();
+    printReceiptDoc(r);
+  };
+  document.getElementById("payModal").onclick = (e) => {
+    if (e.target.id === "payModal") closePayModal();   // 撳背景等於取消
+  };
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { closePayModal(); document.getElementById("syncModal").hidden = true; }
+  });
+  document.getElementById("submitPaidBtn").onclick = () => buildResult(true);
+  document.getElementById("submitUnpaidBtn").onclick = () => buildResult(false);
+  document.getElementById("appForm").onsubmit = (e) => { e.preventDefault(); buildResult(false); };
+  document.getElementById("syncBtn").onclick = () =>
+    manualSync({ wait: true, title: "同步中…", done: "已同步，日曆已更新。" });
+  // 跳去更早月份時，用呢個掣單獨讀返該月資料
+  document.getElementById("calReloadBtn").onclick = () =>
+    manualSync({ wait: true, scope: { month: activeMonthPrefix() },
+                 title: "讀取 " + activeMonthPrefix() + "…",
+                 done: "已讀取 " + activeMonthPrefix() + " 的資料，日曆已更新。" });
+  document.getElementById("syncOkBtn").onclick = () => { document.getElementById("syncModal").hidden = true; };
+  document.getElementById("syncModal").onclick = (e) => {
+    if (e.target.id === "syncModal") document.getElementById("syncModal").hidden = true;
+  };
+  renderSyncState();
+  document.getElementById("studentName").onblur = (e) => { e.target.value = cleanName(e.target.value); };
+  document.getElementById("studentName").oninput = syncClearX;
+  document.getElementById("clearBtn").onclick = clearEntry;
+  syncClearX();
   console.log("[boot] booking.html 已重新載入 · " + new Date().toLocaleTimeString() + " · dataCols=" + document.querySelectorAll('table.ds thead tr:first-child th').length);
 });
 
