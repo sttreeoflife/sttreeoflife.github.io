@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生命樹中心 — 功課輔導班報名</title>
+<style>
+  :root {
+    --primary: #2e7d32;
+    --primary-dark: #1b5e20;
+    --accent: #ffb300;
+    --bg: #f5f7f2;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: var(--bg);
+    color: #333;
+    padding: 24px;
+  }
+  .page { max-width: 980px; margin: 0 auto; }
+  header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff;
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  header h1 { font-size: 24px; }
+  header p { margin-top: 6px; opacity: .9; font-size: 14px; }
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.08);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+  }
+  .card h2 { font-size: 18px; margin-bottom: 14px; color: var(--primary-dark); }
+  .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .toolbar select, .toolbar button {
+    font-size: 15px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background: #fff;
+    cursor: pointer;
+  }
+  .toolbar button.nav {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+    font-weight: bold;
+  }
+  .month-label { font-size: 18px; font-weight: bold; min-width: 120px; text-align: center; }
+  table.cal {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+  }
+  table.cal th {
+    background: var(--primary);
+    color: #fff;
+    padding: 10px;
+    font-size: 15px;
+  }
+  table.cal td {
+    border: 1px solid #e3e6e0;
+    padding: 10px;
+    vertical-align: top;
+    min-height: 96px;
+    width: 20%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  td.empty { background: #fafbf8; }
+  .day-num { font-weight: bold; font-size: 16px; order: -1; margin-bottom: 4px; }
+  .today { color: var(--primary); }
+  .seats { margin: 8px 0 4px; font-size: 13px; color: #666; }
+  .seats .full { color: #d32f2f; font-weight: bold; }
+  .bar { height: 8px; background: #e5e5e5; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+  .bar i { display: block; height: 100%; background: var(--primary); }
+  .bar i.warn { background: var(--accent); }
+  .bar i.full { background: #d32f2f; }
+  label.daypick {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 14px; cursor: pointer;
+  }
+  label.daypick input { width: 18px; height: 18px; cursor: pointer; }
+  .disabled label.daypick { opacity: .5; }
+  form .field { margin-bottom: 12px; }
+  form label { display: block; font-size: 14px; margin-bottom: 4px; font-weight: bold; }
+  form input[type=text] {
+    width: 100%; max-width: 320px;
+    padding: 10px 12px;
+    font-size: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+  }
+  .btn-primary {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    padding: 12px 22px;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-primary:disabled { background: #aaa; cursor: not-allowed; }
+  .result-list { list-style: none; margin-top: 12px; }
+  .result-list li {
+    padding: 8px 12px;
+    border-left: 4px solid var(--accent);
+    background: #fff8e1;
+    margin-bottom: 6px;
+    border-radius: 4px;
+    font-size: 15px;
+  }
+  .summary { margin-top: 12px; font-size: 14px; color: #666; }
+  .error { color: #d32f2f; margin-top: 10px; font-weight: bold; }
+  .ok { color: var(--primary); margin-top: 10px; font-weight: bold; }
+  .count-pick { margin-top: 12px; color: var(--primary-dark); font-weight: bold; }
+  .card-hdr { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .card-hdr h2 { margin-bottom: 0; }
+  .tgl { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; user-select: none; color: #444; }
+  .tgl input { width: 18px; height: 18px; cursor: pointer; }
+  .roster { margin-top: 8px; font-size: 12px; color: #555; line-height: 1.6; }
+  .roster b { color: var(--primary); }
+  .roster .over { color: #999; }
+  table.cal th { cursor: pointer; }
+  table.cal th:hover { background: var(--primary-dark); }
+  table.cal th .wd-hint { display: block; font-size: 11px; font-weight: normal; opacity: .8; }
+  .ds-count { font-size: 13px; color: #666; }
+  table.ds { width: 100%; border-collapse: collapse; margin-top: 6px; }
+  table.ds th {
+    background: #e8f0e6;
+    color: var(--primary-dark);
+    text-align: left;
+    padding: 8px 10px;
+    font-size: 14px;
+    border: 1px solid #d3ddd0;
+  }
+  table.ds td {
+    padding: 8px 10px;
+    border: 1px solid #e3e6e0;
+    font-size: 14px;
+  }
+  table.ds tbody tr:nth-child(even) td { background: #fafbf8; }
+  table.ds tr.fresh td { background: #e8f5e9 !important; }
+  table.ds td.num { color: #999; }
+  table.ds td.ts { color: #666; white-space: nowrap; }
+  table.ds td.rct { font-family: Menlo, monospace; font-size: 13px; color: var(--primary-dark); white-space: nowrap; }
+  .rb-toolbar label { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: bold; margin-right: 14px; }
+  .rb-toolbar select, .rb-toolbar input[type=number] { font-size: 14px; padding: 8px; border: 1px solid #ccc; border-radius: 8px; }
+  .excel-wrap { margin-top: 14px; overflow-x: auto; }
+  table.excel { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 14px; }
+  table.excel th, table.excel td { border: 1px solid #b0b7ab; padding: 8px 12px; vertical-align: top; }
+  table.excel .colletter { background: #eceef4; text-align: center; color: #666; font-size: 12px; }
+  table.excel .title { background: #e8f0e6; text-align: center; font-weight: bold; font-size: 17px; color: var(--primary-dark); }
+  table.excel .label { background: #f4f6f2; font-weight: bold; white-space: nowrap; width: 110px; }
+  table.excel .total { background: #fff8e1; font-weight: bold; }
+  table.excel .num-right { text-align: right; font-family: Menlo, monospace; }
+  /* ===== Dashboard layout / sidebar / tabs ===== */
+  .layout { display: flex; gap: 12px; align-items: flex-start; margin-top: 18px; }
+  .side { flex: 0 0 150px; position: sticky; top: 16px; background: var(--primary); border-radius: 12px; padding: 14px 10px; display: flex; flex-direction: column; gap: 6px; box-shadow: var(--shadow); }
+  .side-logo { font-weight: 800; color: #fff; font-size: 16px; padding: 2px 8px 10px; letter-spacing: 1px; }
+  .side-logo small { display:block; font-weight:400; font-size:11px; opacity:.8; margin-top:2px; letter-spacing:0; }
+  .tab-btn { background: rgba(255,255,255,.08); color: #fff; border: 0; border-radius: 9px; padding: 12px 12px; cursor: pointer; text-align: left; font-size: 15px; font-weight: 600; transition: .15s; }
+  .tab-btn:hover { background: rgba(255,255,255,.18); }
+  .tab-btn.active { background: #fff; color: var(--primary-dark); box-shadow: var(--shadow); }
+  .main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  @media (max-width: 760px) {
+    .layout { flex-direction: column; }
+    .side { flex: 1 1 auto; flex-direction: row; flex-wrap: wrap; position: static; top: 0; padding: 8px; }
+    .side-logo { display: none; }
+    .tab-btn { flex: 1 1 auto; text-align: center; }
+  }
+  /* Attendance panel */
+  .att-date-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 4px; }
+  .att-chip { border: 1px solid #cfd8cb; background: #fff; border-radius: 8px; padding: 7px 12px; font-size: 14px; cursor: pointer; font-weight: 600; color: #444; }
+  .att-chip.active { background: var(--primary); color:#fff; border-color: var(--primary); }
+  .att-chip.weekend { color:#bbb; pointer-events:none; }
+  table.att { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 14px; }
+  table.att th, table.att td { border: 1px solid #dde3d9; padding: 8px 10px; text-align: left; }
+  table.att th { background: #e8f0e6; color: var(--primary-dark); }
+  table.att td:nth-child(3){ text-align:center; }
+  table.att input[type=checkbox]{ width:18px; height:18px; cursor:pointer; accent-color: var(--primary); }
+  .att-actions { margin-top: 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .att-save-msg { font-size: 14px; color: var(--primary-dark); font-weight: 700; }
+  @media print {
+    body * { visibility: hidden; }
+    #receiptPrintArea, #receiptPrintArea * { visibility: visible; }
+    #receiptPrintArea { position: absolute; left: 0; top: 0; width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <header>
+    <h1>生命樹中心 · 功課輔導班報名</h1>
+    <p>每星期一至五上課，每個課堂日最多 7 個名額。請先選擇月份，再揀選想報名的日期。</p>
+  </header>
+
+  <div class="layout">
+    <aside class="side">
+      <div class="side-logo">生命樹中心<small>樹下成長</small></div>
+      <button class="tab-btn active" type="button" data-tab="reg">報名管理</button>
+      <button class="tab-btn" type="button" data-tab="att">點名管理</button>
+      <button class="tab-btn" type="button" data-tab="pay">付款及退款處理</button>
+      <button class="tab-btn" type="button" data-tab="data">模擬數據</button>
+    </aside>
+    <main class="main">
+      <section class="panel active" data-panel="reg">
+
+
+
+  <!-- Application form -->
+  <div class="card">
+    <h2>報名表</h2>
+    <form id="appForm">
+      <div class="field">
+        <label for="studentName">學生姓名 *</label>
+        <input type="text" id="studentName" placeholder="請輸入學生姓名" required>
+      </div>
+      <div class="count-pick" id="pickCount">已揀選 0 天</div>
+      <button class="btn-primary" type="submit" id="submitBtn">產生報名日期清單</button>
+    </form>
+    <div id="result"></div>
+  </div<!-- Month selector -->
+  <div class="card">
+    <div class="card-hdr">
+      <h2>選擇課堂月份</h2>
+    </div>
+    <div class="toolbar">
+      <button class="nav" id="prevMonth" type="button">&larr; 上一個月</button>
+      <select id="yearSelect"></select>
+      <select id="monthSelect"></select>
+      <button class="nav" id="nextMonth" type="button">下一個月 &rarr;</button>
+      <span class="month-label" id="monthLabel"></span>
+    </div>
+
+    <table class="cal" id="cal">
+      <thead><tr>
+        <th data-wd="1">星期一<span class="wd-hint">點擊選取／取消全月</span></th>
+        <th data-wd="2">星期二<span class="wd-hint">點擊選取／取消全月</span></th>
+        <th data-wd="3">星期三<span class="wd-hint">點擊選取／取消全月</span></th>
+        <th data-wd="4">星期四<span class="wd-hint">點擊選取／取消全月</span></th>
+        <th data-wd="5">星期五<span class="wd-hint">點擊選取／取消全月</span></th>
+      </tr></thead>
+      <tbody id="calBody"></tbody>
+    </table>
+  </div>
+      </section>
+
+      <section class="panel" data-panel="att">
+      <div class="card">
+        <h2>點名管理</h2>
+        <div class="toolbar">
+          <label>點名日期 <input type="date" id="attDate"></label>
+          <button class="btn" type="button" id="attRefreshBtn">刷新</button>
+        </div>
+        <p class="hint" id="attHint">揀日期後，下方會列出當日已報名學生，剔選出席後按「儲存點名」。</p>
+        <table class="ds">
+          <thead><tr>
+            <th>學生姓名</th>
+            <th class="num">出席</th>
+          </tr></thead>
+          <tbody id="attBody"></tbody>
+        </table>
+        <div class="toolbar" style="margin-top:12px">
+          <button class="btn-primary" type="button" id="attSaveBtn">儲存點名</button>
+          <span id="attCount"></span>
+        </div>
+      </div>
+      </section>
+
+      <section class="panel" data-panel="data">
+  <!-- Data set -->
+  <div class="card">
+    <div class="card-hdr">
+      <h2>報名資料（Data Set）</h2>
+      <span class="ds-count" id="dsCount"></span>
+    </div>
+    <table class="ds">
+      <thead><tr>
+        <th class="num" style="width:50px">#</th>
+        <th>收據編號</th>
+        <th>學生姓名</th>
+        <th>上課日期</th>
+        <th>報名時間</th>
+        <th>出席</th>
+        <th class="num">收到費用</th>
+        <th class="num">退回費用</th>
+      </tr></thead>
+      <tbody id="dsBody"></tbody>
+    </table>
+  </div>
+      </section>
+
+      <section class="panel" data-panel="pay">
+  <!-- Receipt builder -->
+  <div class="card" id="receiptPrintArea">
+    <div class="card-hdr">
+      <h2>收據產生器（Receipt Builder）</h2>
+      <span class="ds-count" id="rbCount"></span>
+    </div>
+    <div class="toolbar rb-toolbar">
+      <label>收據批次（只顯示<b>當前月份</b>內建立的收據）：
+        <select id="receiptSelect"></select>
+      </label>
+      <label>每堂學費 (HK$)：
+        <input type="number" id="feeInput" min="1" step="1" value="100">
+      </label>
+      <button class="btn-primary" type="button" id="printReceiptBtn">列印收據</button>
+    </div>
+    <div class="recent-batch" id="rbHint"></div>
+    <div class="excel-wrap" id="receiptSheet"></div>
+      </div>
+      </section>
+    </main>
+  </div>
+
+</div>
+
+<script>
+// ===== 生命樹中心・功課輔導班 (Demo) =====
+// Demo dataset: Oct 2026, seat occupancy per weekday.
+// Each day has max 7 seats. Numbers below = seats already taken.
+const BASE_CAPACITY = 7;
+const FEES_PER_CLASS = 100; // demo 每堂學費 HK$100（收據批次預設，與 feeInput 初始值一致）
+
+// Demo student name pool (used to fill seats with names)
+const DEMO_STUDENT_POOL = ["小美","小明","小華","小玲","小杰","小芳","阿強","小慧","子豪","佳恩","佩珊","浩宇","欣怡","承翰","品妍","冠廷","宜庭","志豪","雅婷","柏宇"];
+
+// 2026 Oct demo data: key "YYYY-MM-DD" -> seats already registered (count)
+const demoCounts = {
+  // week 1: 10/1(四), 10/2(五)
+  "2026-10-01": 4,
+  "2026-10-02": 7,   // 已滿
+  // week 2
+  "2026-10-05": 2,
+  "2026-10-06": 5,
+  "2026-10-07": 6,
+  "2026-10-08": 3,
+  "2026-10-09": 7,   // 已滿
+  // week 3
+  "2026-10-12": 1,
+  "2026-10-13": 0,
+  "2026-10-14": 4,
+  "2026-10-15": 7,   // 已滿
+  "2026-10-16": 2,
+  // week 4
+  "2026-10-19": 5,
+  "2026-10-20": 3,
+  "2026-10-21": 0,
+  "2026-10-22": 6,
+  "2026-10-23": 4,
+  // week 5
+  "2026-10-26": 2,
+  "2026-10-27": 7,   // 已滿
+  "2026-10-28": 3,
+  "2026-10-29": 1,
+  "2026-10-30": 5
+};
+
+// Build preset rosters (arrays of names) for the demo data
+function presetRosters() {
+  const r = {};
+  let idx = 0;
+  for (const k in demoCounts) {
+    const n = demoCounts[k];
+    const arr = [];
+    for (let i = 0; i < n; i++) {
+      arr.push(DEMO_STUDENT_POOL[idx++ % DEMO_STUDENT_POOL.length]);
+    }
+    r[k] = arr;
+  }
+  return r;
+}
+
+const MONTH_NAMES = ["一月","二月","三月","四月","五月","六月","七月","八月","九月","十月","十一月","十二月"];
+const WEEKDAYS = [1,2,3,4,5]; // Mon(1)..Fri(5), 週末不開課
+
+let year = 2026;
+let month = 9; // 0-based (10月)
+let baseRosters = presetRosters();
+let showNames = true;
+let selectedDates = {};
+
+// 報名紀錄 Data Set: 每筆 = (學生, 上課日期, 報名時間, 收據編號)
+// 同一張收據 (同一學生・同一批報名日期) 共享同一個收據編號
+let registrations = [];
+let freshRegs = [];
+let receipts = [];
+let rctSeq = 0;
+
+function nextReceiptNo() {
+  return "RCT-" + String(++rctSeq).padStart(4, "0");
+}
+
+// 由 demo 名單建立收據批次：同一位學生每天的名字會合併為同一張收據
+function initReceipts() {
+  const list = [];
+  const map = {}; // name -> receipt
+  const base = new Date(2026, 9, 1, 8, 30); // demo 起始報名時間 2026-10-01 08:30 (收據於當月建立)
+  let i = 0;
+  const keys = Object.keys(demoCounts).sort();
+  keys.forEach(k => {
+    rosterOf(k).forEach(nm => {
+      if (!map[nm]) {
+        map[nm] = {
+          id: list.length + 1,
+          receiptNo: nextReceiptNo(),
+          name: nm,
+          ts: new Date(base.getTime() + i * 90 * 60 * 1000),
+          dates: []
+        };
+        list.push(map[nm]);
+      }
+      map[nm].dates.push(k);
+      i++;
+    });
+  });
+  return list;
+}
+receipts = initReceipts();
+
+const STORE_KEY = "treeoflifeBooking_v1";
+
+function nextReceiptNoStr() {
+  const tail = String(receipts.length ? receipts[receipts.length - 1].receiptNo.split("-")[1] : 0);
+  return "TB-" + String(+tail + 1).padStart(4, "0");
+}
+
+function persistAll() {
+  try {
+    const d = { receipts, registrations, selectedDates, selectedWeekdays, year, month };
+    localStorage.setItem(STORE_KEY, JSON.stringify(d));
+  } catch (e) { /* 隱私模式／磁碟滿：靜默失敗 */ }
+}
+
+function dayOfKey(k) {
+  const p2 = k.split("-");
+  return new Date(+p2[0], +p2[1] - 1, +p2[2]);
+}
+
+function reviveReg(r) {
+  return Object.assign({}, r, { ts: r.ts ? new Date(r.ts) : null });
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (!raw) return false;
+    const d = JSON.parse(raw);
+    if (!Array.isArray(d.receipts)) return false;
+    receipts = d.receipts.map(reviveReg);
+    registrations = (d.registrations || []).map(reviveReg);
+    selectedDates = d.selectedDates || {};
+    selectedWeekdays = d.selectedWeekdays || {};
+    if (typeof d.year === "number") year = d.year;
+    if (typeof d.month === "number") month = d.month;
+    return true;
+  } catch (e) { return false; }
+}
+
+// 啟動時：若之前有儲存過資料，先用儲存內容覆蓋預設假資料
+window.addEventListener("load", () => {
+  if (loadState()) {
+    hookWeekdayHeaders();
+    renderCal();
+    updatePickCount();
+    renderDataset();
+    renderReceiptToolbar();
+    buildReceiptSheet();
+    renderAttPanel();
+  }
+});
+
+function initRegistrations() {
+  const ledger = [];
+  receipts.forEach(r => {
+    r.dates.forEach(d => {
+      ledger.push({
+        id: ledger.length + 1, name: r.name, date: d, ts: r.ts, receiptNo: r.receiptNo,
+        recvFee: FEES_PER_CLASS, returnFee: 0, attend: 0
+      });
+    });
+  });
+  return ledger;
+}
+registrations = initRegistrations();
+
+function rosterOf(key) { return baseRosters[key] || []; }
+function takenOf(key) { return rosterOf(key).length; }
+
+function fmtTs(d) {
+  const p = n => String(n).padStart(2, "0");
+  return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+}
+
+function renderDataset() {
+  const sorted = registrations.slice().sort((a, b) => b.ts - a.ts); // 最新報名置頂
+  const tbody = document.getElementById("dsBody");
+  tbody.innerHTML = "";
+  sorted.forEach(r => {
+    const tr = document.createElement("tr");
+    if (freshRegs.includes(r)) tr.className = "fresh";
+    const tdSeq = document.createElement("td");
+    tdSeq.className = "num";
+    tdSeq.textContent = r.id;
+    const tdRct = document.createElement("td");
+    tdRct.className = "rct";
+    tdRct.textContent = r.receiptNo;
+    const tdName = document.createElement("td");
+    tdName.textContent = r.name;
+    const tdDate = document.createElement("td");
+    tdDate.textContent = fmtKey(r.date);
+    const tdTs = document.createElement("td");
+    tdTs.textContent = fmtTs(r.ts);
+    const tdAtt = document.createElement("td");
+    tdAtt.className = r.attend ? "att-yes" : "att-no";
+    tdAtt.textContent = r.attend ? "已出席" : "未出席";
+    // 收到費用：報名時自動依每堂學費寫入
+    const tdGot = document.createElement("td");
+    tdGot.className = "num-right";
+    tdGot.textContent = "$ " + r.recvFee.toLocaleString();
+    // 退回費用：人手輸入
+    const tdBack = document.createElement("td");
+    tdBack.className = "num-right";
+    const backIn = document.createElement("input");
+    backIn.type = "number";
+    backIn.min = "0";
+    backIn.max = (r.recvFee || 0).toString();
+    backIn.step = "1";
+    backIn.value = r.returnFee;
+    backIn.className = "ret-input";
+    backIn.dataset.id = r.id;
+    backIn.oninput = () => {
+      const v = Math.min(r.recvFee, Math.max(0, +backIn.value || 0));
+      r.returnFee = v;
+      backIn.value = v;
+      if (v > 0) { tr.classList.add("ret"); } else { tr.classList.remove("ret"); }
+    };
+    tdBack.appendChild(backIn);
+    tr.appendChild(tdSeq);
+    tr.appendChild(tdRct);
+    tr.appendChild(tdName);
+    tr.appendChild(tdDate);
+    tr.appendChild(tdTs);
+    tr.appendChild(tdAtt);
+    tr.appendChild(tdGot);
+    tr.appendChild(tdBack);
+    tbody.appendChild(tr);
+  });
+  document.getElementById("dsCount").textContent = "共 " + registrations.length + " 筆報名紀錄 · " + receipts.length + " 張收據";
+}
+
+function dateKey(y, m, d) {
+  return y + "-" + String(m + 1).padStart(2, "0") + "-" + String(d).padStart(2, "0");
+}
+
+function refreshLabel() {
+  document.getElementById("monthLabel").textContent = year + "年" + MONTH_NAMES[month];
+}
+
+function initSelectors() {
+  const ys = document.getElementById("yearSelect");
+  ys.innerHTML = "";
+  for (let y = 2026; y <= 2027; y++) {
+    const o = document.createElement("option");
+    o.value = y; o.textContent = y + "年";
+    if (y === year) o.selected = true;
+    ys.appendChild(o);
+  }
+  const ms = document.getElementById("monthSelect");
+  ms.innerHTML = "";
+  for (let i = 0; i < 12; i++) {
+    const o = document.createElement("option");
+    o.value = i; o.textContent = MONTH_NAMES[i];
+    if (i === month) o.selected = true;
+    ms.appendChild(o);
+  }
+  ys.onchange = () => { year = +ys.value; refreshLabel(); renderCal(); renderReceiptToolbar(); buildReceiptSheet(); };
+  ms.onchange = () => { month = +ms.value; refreshLabel(); renderCal(); renderReceiptToolbar(); buildReceiptSheet(); };
+  document.getElementById("prevMonth").onclick = () => {
+    month--; if (month < 0) { month = 11; year--; }
+    syncSelectors(); renderCal(); renderReceiptToolbar(); buildReceiptSheet();
+  };
+  document.getElementById("nextMonth").onclick = () => {
+    month++; if (month > 11) { month = 0; year++; }
+    syncSelectors(); renderCal(); renderReceiptToolbar(); buildReceiptSheet();
+  };
+}
+
+function syncSelectors() {
+  document.getElementById("yearSelect").value = year;
+  document.getElementById("monthSelect").value = month;
+  refreshLabel();
+}
+
+function renderCal() {
+  const body = document.getElementById("calBody");
+  body.innerHTML = "";
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  // Build a grid mapping weekday -> day-of-month for this month.
+  let rows = [];
+  let row = { 1: null, 2: null, 3: null, 4: null, 5: null };
+  let started = false;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const wd = new Date(year, month, d).getDay(); // 0=Sun,,,5=Fri,6=Sat
+    if (wd >= 1 && wd <= 5) {           // 星期一至五
+      row[wd] = d;
+      started = true;
+      if (wd === 5) { rows.push(row); row = { 1: null, 2: null, 3: null, 4: null, 5: null }; }
+    } else if (!started) {
+      // 月初週末，留空格保持對齊
+      // no-op
+    }
+  }
+  if (row[1] !== null || row[2] !== null || row[3] !== null || row[4] !== null || row[5] !== null) {
+    rows.push(row);
+  }
+
+  const today = new Date();
+  const todayKey = dateKey(today.getFullYear(), today.getMonth(), today.getDate());
+
+  rows.forEach(r => {
+    const tr = document.createElement("tr");
+    WEEKDAYS.forEach(wd => {
+      const td = document.createElement("td");
+      const d = r[wd];
+      if (d === null) {
+        td.className = "empty";
+      } else {
+        const key = dateKey(year, month, d);
+        const roster = rosterOf(key);
+        const taken = roster.length;
+        const left = BASE_CAPACITY - taken;
+        const isFull = taken >= BASE_CAPACITY;
+        const pct = Math.min(100, (taken / BASE_CAPACITY) * 100);
+
+        const dayNum = document.createElement("div");
+        dayNum.className = "day-num" + (key === todayKey ? " today" : "");
+        dayNum.textContent = d + "日";
+
+        const seats = document.createElement("div");
+        seats.className = "seats";
+        if (isFull) {
+          seats.innerHTML = "已滿 (" + taken + "/" + BASE_CAPACITY + ")";
+          seats.className += " full";
+        } else {
+          seats.textContent = "剩餘名額 " + left + " / " + BASE_CAPACITY;
+        }
+
+        const bar = document.createElement("div");
+        bar.className = "bar";
+        const fill = document.createElement("i");
+        fill.style.width = pct + "%";
+        if (isFull) fill.className = "full";
+        else if (taken >= 5) fill.className = "warn";
+        bar.appendChild(fill);
+
+        if (showNames && roster.length > 0) {
+          const rl = document.createElement("div");
+          rl.className = "roster";
+          rl.innerHTML = roster.map(s => "<b>" + esc(s) + "</b>").join("、");
+          td.appendChild(rl);
+        }
+
+        td.appendChild(dayNum);
+        td.appendChild(seats);
+        td.appendChild(bar);
+        if (roster.length > 0) {
+          const rl = document.createElement("div");
+          rl.className = "roster";
+          rl.innerHTML = roster.map(nm => "<b>" + esc(nm) + "</b>").join("、");
+          td.appendChild(rl);
+        }
+        if (isFull && !selectedDates[key]) td.className = "disabled";
+      }
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+}
+
+function toggleWeekday(wd) {
+  const cbs = document.querySelectorAll('#calBody input[type=checkbox]');
+  const list = [];
+  cbs.forEach(cb => { if (+cb.dataset.wd === wd) list.push(cb); });
+  const activatable = list.filter(cb => !cb.disabled);
+  if (activatable.length === 0) return;
+  const allChecked = activatable.every(cb => cb.checked);
+  activatable.forEach(cb => {
+    if (allChecked) {
+      cb.checked = false;
+      delete selectedDates[cb.value];
+    } else {
+      cb.checked = true;
+      selectedDates[cb.value] = true;
+    }
+  });
+  updatePickCount();
+}
+
+function hookWeekdayHeaders() {
+  const ths = document.querySelectorAll("#cal th");
+  ths.forEach(th => { th.onclick = () => toggleWeekday(+th.dataset.wd); });
+}
+
+function updatePickCount() {
+  document.getElementById("pickCount").textContent = "已揀選 " + Object.keys(selectedDates).length + " 天";
+}
+
+function buildResult() {
+  const name = document.getElementById("studentName").value.trim();
+  const out = document.getElementById("result");
+  if (!name) {
+    out.innerHTML = '<div class="error">請輸入學生姓名。</div>';
+    return;
+  }
+  const dates = Object.keys(selectedDates).sort();
+  if (dates.length === 0) {
+    out.innerHTML = '<div class="error">請至少揀選一個上課日期。</div>';
+    return;
+  }
+
+  // 檢查名額: 確認冇任何所選日期已爆滿
+  const over = dates.filter(k => takenOf(k) >= BASE_CAPACITY);
+  if (over.length > 0) {
+    out.innerHTML = '<div class="error">以下日期已滿，請取消揀選：</div><ul class="result-list">' +
+      over.map(k => "<li>" + fmtKey(k) + "（已滿）</li>").join("") + "</ul>";
+    return;
+  }
+// 登記名額 (將學生姓名加入所揀日期的名單,並寫入報名紀錄)
+  // 同一批報名共享同一張收據編號
+  const now = new Date();
+  const receipt = { id: receipts.length + 1, receiptNo: nextReceiptNo(), name, ts: now, dates: dates.slice() };
+  receipts.push(receipt);
+  dates.forEach(k => {
+    (baseRosters[k] = baseRosters[k] || []).push(name);
+    const rec = { id: registrations.length + 1, name, date: k, ts: now, receiptNo: receipt.receiptNo, recvFee: FEES_PER_CLASS, returnFee: 0, attend: 0 };
+    registrations.push(rec);
+    freshRegs.push(rec);
+  });
+  selectedDates = {};
+  persistAll();
+
+
+  const list = dates.map(k => fmtKey(k)).join("、");
+  out.innerHTML =
+    '<div class="ok">✅ 報名成功！收據編號 <b>' + receipt.receiptNo + '</b> 已發出：</div>' +
+    '<div class="summary">學生姓名：<b>' + esc(name) + '</b></div>' +
+    '<div class="summary">上課日期（共 ' + dates.length + ' 天）：</div>' +
+    '<ul class="result-list">' +
+    dates.map(k => "<li><b>" + fmtKey(k) + "</b>（星期一至五 · 功課輔導班）</li>").join("") +
+    '</ul>' +
+    '<div class="summary">多謝 ' + esc(name) + ' 選擇生命樹中心功課輔導班！</div>';
+
+  updatePickCount();
+  renderCal();
+  renderDataset();
+  renderReceiptToolbar();
+  buildReceiptSheet();
+}
+
+// ===== 收據產生器 / Receipt Builder =====
+
+function inActiveMonth(r) {
+  return r.ts.getFullYear() === year && r.ts.getMonth() === month;
+}
+
+function renderReceiptToolbar() {
+  const sel = document.getElementById("receiptSelect");
+  const prev = sel.value;
+  sel.innerHTML = "";
+
+  // 只列出「當前活躍月份」內建立的收據 (不輸入日期，直接以日曆當前月份過濾)
+  const monthList = receipts.filter(inActiveMonth).sort((a, b) => b.ts - a.ts); // 最新批次置頂
+  monthList.forEach(r => {
+    const o = document.createElement("option");
+    o.value = r.receiptNo;
+    o.textContent = r.receiptNo + " · " + r.name + "（" + r.dates.length + "堂）· " + fmtTs(r.ts);
+    sel.appendChild(o);
+  });
+
+  // 保留之前的選擇；若唔喺當月，就自動揀當月最新一筆
+  const latest = monthList[0];
+  if (latest) {
+    if (prev && monthList.some(r => r.receiptNo === prev)) sel.value = prev;
+    else sel.value = latest.receiptNo;
+  }
+
+  document.getElementById("rbCount").textContent = "共 " + monthList.length + " 張收據（" + year + "年" + MONTH_NAMES[month] + "）";
+}
+
+function buildReceiptSheet() {
+  const sheet = document.getElementById("receiptSheet");
+  if (!receipts.length) {
+    sheet.innerHTML = '<div class="error">尚無任何報名紀錄。</div>';
+    return;
+  }
+  const sel = document.getElementById("receiptSelect");
+  const receiptNo = sel.value || receipts[receipts.length - 1].receiptNo;
+  const r = receipts.find(x => x.receiptNo === receiptNo);
+  const fee = +document.getElementById("feeInput").value || 0;
+  const classes = r.dates.length;
+  const total = fee * classes;
+
+  const th = (t) => '<td class="colletter">' + t + "</td>";
+  const L = (t) => '<td class="label">' + t + "</td>";
+  const V = (t) => "<td>" + t + "</td>";
+
+  let html = '<table class="excel">';
+  html += '<tr>' + th("A") + th("B") + th("C") + th("D") + th("E") + th("F") + "</tr>";
+  html += '<tr><td class="title" colspan="6">生命樹中心 · 功課輔導班 收據</td></tr>';
+  html += "<tr>" + L("收據編號") + '<td colspan="2">' + r.receiptNo + "</td>" + L("班別") + '<td colspan="2">功課輔導班（星期一至五）</td></tr>';
+  html += "<tr>" + L("學生姓名") + '<td colspan="2">' + esc(r.name) + "</td>" + L("報名時間") + '<td colspan="2">' + fmtTs(r.ts) + "</td></tr>";
+  html += "<tr>" + L("每堂學費") + '<td colspan="2">HK$ ' + fee + "</td>" + L("課堂堂數") + '<td colspan="2">' + classes + " 堂</td></tr>";
+
+  // 上課日期清單 (每堂一行)
+  r.dates.forEach((d, i) => {
+    const label = i === 0 ? "上課日期" : "";
+    const style = i === 0 ? 'class="label"' : "";
+    html += "<tr><td " + style + ' rowspan="' + classes + '">' + label + "</td>" + V(i + 1) + V(fmtKey(d)) + "</td><td></td><td></td><td></td></tr>";
+  });
+
+  html += '<tr><td class="total" colspan="2">合計金額（收取）</td>' +
+    '<td class="total num-right">HK$ ' + total + "</td>" +
+    '<td class="total">（' + classes + " 堂 × HK$ " + fee + "）</td><td></td><td></td></tr>";
+  html += "</table>";
+  sheet.innerHTML = html;
+}
+
+function renderAttPanel() {
+  const dateIn = document.getElementById("attDate");
+  if (!dateIn.value) dateIn.value = attTodayKey();
+  const k = dateIn.value;
+  const roster = registrations.filter(r => r.date === k);
+  const tbody = document.getElementById("attBody");
+  tbody.innerHTML = "";
+  if (!roster.length) {
+    tbody.innerHTML = '<tr><td colspan="2" class="empty">當日未有學生報名。</td></tr>';
+    document.getElementById("attCount").textContent = "0 位學生";
+    return;
+  }
+  roster.forEach(r => {
+    const tr = document.createElement("tr");
+    const tdName = document.createElement("td");
+    tdName.textContent = r.name;
+    const tdAtt = document.createElement("td");
+    tdAtt.className = "num";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = !!r.attend;
+    cb.dataset.rid = r.id;
+    cb.onchange = () => {
+      r.attend = cb.checked ? 1 : 0;
+      updateAttCount(roster);
+    };
+    tdAtt.appendChild(cb);
+    tr.appendChild(tdName);
+    tr.appendChild(tdAtt);
+    tbody.appendChild(tr);
+  });
+  updateAttCount(roster);
+}
+
+function updateAttCount(roster) {
+  const n = roster.reduce((a, r) => a + (r.attend ? 1 : 0), 0);
+  document.getElementById("attCount").textContent = "出席 " + n + " / " + roster.length + " 位學生";
+}
+
+function attTodayKey() {
+  const t = new Date();
+  return t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0");
+}
+
+function saveAtt() {
+  persistRegistrations();
+  renderDataset();
+  document.getElementById("attHint").textContent = "✅ 點名已儲存。";
+}
+
+function fmtKey(k) {
+  const parts = k.split("-");
+  const wd = new Date(+parts[0], +parts[1] - 1, +parts[2]).getDay();
+  return +parts[0] + "年" + (+parts[1]) + "月" + (+parts[2]) + "日（" + WD[wd] + "）";
+}
+const WD = ["星期日","星期一","星期二","星期三","星期四","星期五","星期六"];
+
+function esc(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  initSelectors();
+  refreshLabel();
+  // ----- dashboard: sidebar tab switching -----
+  const tabBtns = document.querySelectorAll('.tab-btn');
+  const showPanel = (name) => {
+    document.querySelectorAll('.panel').forEach(pan =>
+      pan.classList.toggle('active', pan.dataset.panel === name));
+    tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === name));
+  };
+  tabBtns.forEach(b => b.addEventListener('click', () => {
+    showPanel(b.dataset.tab);
+    const pans = document.querySelectorAll('.panel.show-names-active, .panel[data-panel=' + b.dataset.tab + ']');
+    if (b.dataset.tab === "att") renderAttPanel();
+  }));
+  showPanel('reg');
+  document.getElementById("attDate").onchange = renderAttPanel;
+  document.getElementById("attRefreshBtn").onclick = renderAttPanel;
+  document.getElementById("attSaveBtn").onclick = saveAtt;
+  renderAttPanel();
+
+  renderCal();
+  updatePickCount();
+  renderDataset();
+  renderReceiptToolbar();
+  buildReceiptSheet();
+  hookWeekdayHeaders();
+  document.getElementById("receiptSelect").onchange = () => buildReceiptSheet();
+  document.getElementById("feeInput").onchange = () => buildReceiptSheet();
+  document.getElementById("printReceiptBtn").onclick = () => window.print();
+  document.getElementById("appForm").onsubmit = (e) => { e.preventDefault(); buildResult(); };
+  console.log("[boot] booking.html 已重新載入 · " + new Date().toLocaleTimeString() + " · dataCols=" + document.querySelectorAll('table.ds thead tr:first-child th').length);
+});
+
+</script>
+</body>
+</html>
