@@ -561,6 +561,7 @@
     <div class="toolbar rb-toolbar">
       <label>報名月份：
         <input type="month" id="rbMonth">
+        <button class="btn" type="button" id="rbRefreshBtn">⟳ 刷新</button>
       </label>
       <label>收據批次：
         <select id="receiptSelect"></select>
@@ -583,7 +584,7 @@
           </label>
           <button class="btn" type="button" id="refRefreshBtn">刷新</button>
         </div>
-        <p class="hint">選擇日期後，下方列出當日已收款的報名；勾選學生後按「確認退款」，該堂學費會記入「退回費用」。</p>
+        <p class="hint" id="refHint">選擇日期後，下方列出當日已收款的報名；勾選學生後按「確認退款」，該堂學費會記入「退回費用」。</p>
         <table class="ds">
           <thead><tr>
             <th>學生姓名</th>
@@ -847,10 +848,17 @@ function syncFrom() {
   return t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0");
 }
 
-function defaultScope() { return { from: syncFrom() }; }
+// refresh 預設範圍：上月 → 下月（3 個月），避免一次過載入太遠嘅預約
+function syncTo() {
+  const t = new Date(TODAY.getFullYear(), TODAY.getMonth() + 1, 1);
+  return t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0");
+}
+
+function defaultScope() { return { from: syncFrom(), to: syncTo() }; }
 
 function scopeText(scope) {
-  return scope.month ? scope.month : scope.from + " 起";
+  if (scope.month) return scope.month;
+  return scope.from + (scope.to ? " 至 " + scope.to : " 起");
 }
 
 function isMonthLoaded(m) {
@@ -947,24 +955,6 @@ function rebuildRosters() {
   allRows().forEach(r => {
     if (!r.date) return;
     (baseRosters[r.date] = baseRosters[r.date] || []).push({ name: r.name, pending: isPending(r) });
-  });
-}
-
-// 讀取試算表（報名管理所在月份）
-function loadSheet(scope, cb) {
-  scope = scope || defaultScope();
-  if (!hasBackend()) { syncNote = "本機模式（未設定後端）"; renderSyncState(); if (cb) cb(false); return; }
-  const params = Object.assign({ action: "registrations" }, scope);
-  jsonpGet(params, (d) => {
-    const ok = !!(d && d.ok && Array.isArray(d.registrations));
-    if (ok) {
-      adoptSheet(d.registrations, scope);
-      syncNote = "已讀取 " + scopeText(scope) + " · " + fmtClock(new Date());
-    } else {
-      syncNote = "讀取失敗，顯示本機資料";
-    }
-    refreshAll();
-    if (cb) cb(ok);
   });
 }
 
@@ -1075,48 +1065,84 @@ function sendBatches(batches, onDone, collected, idx) {
  */
 function manualSync(opts) {
   opts = opts || {};
-  if (syncing) return;
+  if (syncing) {
+    // 唔好靜靜哋吞：否則用戶以為撳咗冇反應，就撳多幾次
+    if (!opts.silent) { syncNote = "⏳ 同步進行中，請稍候…"; renderSyncState(); }
+    return;
+  }
+  // 開頁自動同步用 silent：唔彈視窗，失敗只喺側欄寫低，避免一 refresh 就 popup
+  const fail = (html, title) => { if (!opts.silent) showSyncError(html, title); };
   if (!hasBackend()) {
     syncNote = "未設定後端，無法同步";
     renderSyncState();
     hideWait();
-    showSyncError("<p>未設定 Apps Script 網址（GFORM.webapp），所有資料只會留喺本機。</p>", "未設定同步");
+    fail("<p>未設定 Apps Script 網址（GFORM.webapp），所有資料只會留喺本機。</p>", "未設定同步");
     if (opts.onDone) opts.onDone(false, "no-backend");
     return;
   }
   syncing = true;
   syncNote = syncQueue.length ? "寫入中…" : "讀取中…";
   renderSyncState();
+  const hadWrites = syncQueue.length > 0;   // 今次本來有無嘢要寫入（用嚟講清楚提示）
   const batches = splitBatches(syncQueue.slice());
   if (opts.wait) {
-    // 分母 = 堂數（每堂一步）+ 1（最後 GET 返嚟確認）
+    // 分母 = 寫入（1）+ 讀返報名（1）+ 讀返假期（1）；淨係重讀就 2 步
     openWait(opts.title || "處理中…",
       batches.length ? "正在寫入資料庫，請稍候。" : "正在讀取資料庫，請稍候。",
-      batches.length ? 2 : 1);
+      batches.length ? 3 : 2);
   }
 
   const scope = opts.scope || defaultScope();
-  const reload = (okNote) => {
+  const reload = (okNote, attempt) => {
+    attempt = attempt || 0;
     jsonpGet(Object.assign({ action: "registrations" }, scope), (d2) => {
-      syncing = false;
       if (d2 && d2.ok && Array.isArray(d2.registrations)) {
-        adoptSheet(d2.registrations, scope);
-        syncNote = okNote + " " + scopeText(scope) + " · " + fmtClock(new Date());
-        refreshAll();
-        doneWait(opts.done);
+        try {
+          adoptSheet(d2.registrations, scope, opts);
+          syncNote = okNote + " " + scopeText(scope) + " · " + fmtClock(new Date());
+          refreshAll();
+          if (!document.getElementById("waitModal").hidden) setWaitProgress(waitTotalSteps - 1);
+          setWait(null, "已讀取報名資料，正在更新假期…");
+        } catch (err) {
+          // 畫面更新出錯唔可以將 syncing 卡住，否則之後每次同步都變成冇反應
+          syncing = false;
+          syncNote = "已讀取，但畫面更新出錯";
+          hideWait();
+          if (!opts.silent) showSyncError(
+            "<p>資料已讀取，但更新畫面時出錯：<br><code>" +
+            esc(String((err && err.message) || err)) + "</code></p>", "畫面更新失敗");
+          if (opts.onDone) opts.onDone(false, "render-failed");
+          return;
+        }
+        loadHolidays(() => {
+          syncing = false;
+          doneWait(opts.done);
+        }, scope);
         if (opts.onDone) opts.onDone(true, null, syncResults);
+      } else if (attempt < 1) {
+        // Apps Script 偶發性壅塞／授權過期／回應被截斷，第一次失敗先自動重試一次
+        setWait(null, "讀取失敗，正在重試…");
+        setTimeout(() => reload(okNote, attempt + 1), 1200);
       } else {
-        syncNote = "已寫入，但重讀失敗";
+        syncing = false;
+        // 講清楚究竟係「寫入過」定「淨係重讀」，同埋畀返後端真正嘅錯誤
+        const why = d2 && d2.error
+          ? "後端回報：" + esc(String(d2.error))
+          : (d2 === null
+              ? "冇收到後端回應（逾時、網絡中斷，或 Apps Script 忙碌／授權過期）。"
+              : "後端回傳咗預期以外嘅內容。");
+        const wrote = hadWrites ? "資料已寫入，但" : "";
+        syncNote = wrote + "讀返資料失敗";
         refreshAll();
         hideWait();
-        showSyncError("<p>資料已寫入，但讀返嚟確認嗰陣失敗，畫面可能唔係最新。請撳側欄嘅「手動同步」再讀一次。</p>",
+        fail("<p>" + (wrote || "讀取資料時") + "確認失敗，畫面可能唔係最新。請撳側欄嘅「手動同步」再讀一次。</p>" +
+             "<p style='color:#b00'><b>原因：</b>" + why + "</p>",
           "未能確認");
-        if (opts.onDone) opts.onDone(false, "reload-failed");
+        if (opts.onDone) opts.onDone(false, "reload-failed", d2 && d2.error);
       }
-    }, 20000);
+    }, 25000);
   };
 
-  const hadHolidayOps = syncQueue.some(op => op.op === "setHoliday" || op.op === "delHoliday");
   if (!syncQueue.length) { reload("✅ 已讀取"); return; }
   setWait(null, "正在寫入資料庫…");
 
@@ -1128,7 +1154,7 @@ function manualSync(opts) {
       hideWait();
       // 舊版後端：未知 action 會當成讀取，回傳 registrations 而冇 batch 欄位
       const stale = !!(resp && resp.ok && !resp.batch);
-      showSyncError(conflicts && conflicts.length
+      fail(conflicts && conflicts.length
         ? dupMessage(conflicts.reduce((a, c) => a.concat((c.dates || []).map(dt =>
             ({ name: c.name, date: dt, receiptNo: c.receiptNo }))), []))
         : stale
@@ -1145,14 +1171,15 @@ function manualSync(opts) {
     persistAll();
     syncResults = results || [];
     setWait(null, "寫入完成，正在向資料庫確認…");
-    if (hadHolidayOps) loadHolidays();     // 假期以試算表為準，重讀一次
     reload("✅ 已同步");
   });
 }
 
 // 同步成功：該月份嘅資料改以試算表為準，清走對應嘅前端記憶
 // rows = 今次讀返嚟嘅行；scope = {from:'yyyy-MM'} 或 {month:'yyyy-MM'}
-function adoptSheet(rows, scope) {
+function adoptSheet(rows, scope, opts) {
+  opts = opts || {};
+  const overwrite = opts.overwrite !== false;   // 預設：GET 讀咗乜就以乜為準
   const inScope = d => scope.month
     ? String(d).indexOf(scope.month + "-") === 0
     : String(d).slice(0, 7) >= scope.from;
@@ -1176,11 +1203,24 @@ function adoptSheet(rows, scope) {
   syncQueue.forEach(op => {
     if (op.op === "add") (op.dates || []).forEach(d => stillPending.add(op.receiptNo + "|" + d));
   });
-  registrations = registrations.filter(r =>
-    !inScope(r.date) || stillPending.has(r.receiptNo + "|" + r.date));
-  Object.keys(localEdits).forEach(k => {
-    if (inScope(k.split("|")[1]) && !stillPending.has(k)) delete localEdits[k];
-  });
+  if (overwrite) {
+    // 資料庫為準：GET 讀咗乜就顯示乜，本機唔再留任何副本。
+    // registrations 只剩「仲未寫入資料庫」嘅項目（正常完成 POST 後呢個係空），
+    // 畫面實際由 liveByMonth（DB 快取）提供，所以唔會再見到過期本機資料。
+    const pending = registrations.filter(r => stillPending.has(r.receiptNo + "|" + r.date));
+    registrations = pending.map((r, i) => Object.assign({}, r, { id: i + 1 }));
+    // 收據流水號至少要高過資料庫出現過嘅，避免再開出撞號
+    rows.forEach(r => {
+      if (r && r.receiptNo) rctSeq = Math.max(rctSeq, +String(r.receiptNo).split("-")[1] || 0);
+    });
+    localEdits = {};        // 本機逐行改動全部清走，一切以資料庫為準
+  } else {
+    registrations = registrations.filter(r =>
+      !inScope(r.date) || stillPending.has(r.receiptNo + "|" + r.date));
+    Object.keys(localEdits).forEach(k => {
+      if (inScope(k.split("|")[1]) && !stillPending.has(k)) delete localEdits[k];
+    });
+  }
   freshRegs = [];
   persistAll();
 }
@@ -1886,29 +1926,32 @@ let holSyncNote = "";
 
 // 刷新：重新由試算表讀一次假期（唔係淨係重畫畫面）
 function refreshHolidays() {
-  const btn = document.getElementById("holRefreshBtn");
   const msg = document.getElementById("holMsg");
   if (!GFORM.webapp) {
     msg.textContent = "本機模式，冇後端可讀。";
     renderHolPanel();
     return;
   }
-  btn.disabled = true;
-  const label = btn.textContent;
-  btn.textContent = "讀取中…";
   msg.textContent = "";
+  openWait("讀取假期中…", "正在由試算表重新讀取假期，請稍候。", 1);
   loadHolidays(() => {
-    btn.disabled = false;
-    btn.textContent = label;
-    msg.textContent = holSyncNote.indexOf("失敗") >= 0
+    const failed = holSyncNote.indexOf("失敗") >= 0;
+    msg.textContent = failed
       ? "⚠️ 試算表讀取失敗，暫用本機假期。"
       : "✅ 已由試算表重新讀取。";
+    if (failed) hideWait(); else doneWait("已由試算表重新讀取假期。");
   });
 }
 
-function loadHolidays(cb) {
+let holidayLoad = null;   // 進行中嘅假期讀取，避免並發重複請求
+
+function loadHolidays(cb, scope) {
   if (!GFORM.webapp) { holSyncNote = "本機模式"; if (cb) cb(); return; }
-  jsonpGet({ action: "holidays" }, (d) => {
+  // 已經有讀取進行中：排埋隊等佢完成，唔好再開多一個（Apps Script 併發執行有限）
+  if (holidayLoad) { holidayLoad.push(cb); return; }
+  holidayLoad = [cb];
+  const waiters = holidayLoad;
+  jsonpGet(Object.assign({ action: "holidays" }, scope || {}), (d) => {
     if (d && d.ok && d.holidays) {
       holidays = d.holidays;
       applyPendingHolidays();   // 未同步嘅假期改動唔可以被試算表蓋走
@@ -1919,11 +1962,10 @@ function loadHolidays(cb) {
       holSyncNote = "試算表讀取失敗，暫用本機假期";
     }
     renderHolPanel();
-    if (cb) cb();
-  });
+    holidayLoad = null;
+    waiters.forEach(f => { if (f) f(); });
+  }, 20000);   // 讀成張「中心假期」表，冷啟動慢，唔可以食 6 秒預設值
 }
-
-// 未同步嘅假期改動（同步之前，畫面一律以前端記憶為準）
 function applyPendingHolidays() {
   syncQueue.forEach(op => {
     if (op.op === "setHoliday") {
@@ -2267,14 +2309,36 @@ document.addEventListener("DOMContentLoaded", () => {
   document.querySelectorAll('.tab-btn').forEach(b =>
     b.addEventListener('click', () => showPanel(b.dataset.tab)));
   showPanel('reg');
+  // 刷新某個月份：去資料庫讀返該月（GET + 覆蓋），唔再淨係重繪本機
+  function refreshMonth(ym, title, afterMsg) {
+    if (!/^\d{4}-\d{2}$/.test(ym || "")) return false;
+    manualSync({ wait: true, silent: true, overwrite: true, scope: { month: ym },
+                 title: title, done: "已讀取 " + ym + " 的資料。",
+                 onDone: (ok) => {
+                   if (afterMsg) afterMsg(ok, ym);
+                 } });
+    return true;
+  }
   const clearAttMsg = () => { document.getElementById("attSaveMsg").textContent = ""; renderAttPanel(); };
   document.getElementById("attDate").onchange = clearAttMsg;
-  document.getElementById("attRefreshBtn").onclick = clearAttMsg;
+  document.getElementById("attRefreshBtn").onclick = () => {
+    const d = document.getElementById("attDate").value;
+    if (!d) { document.getElementById("attHint").textContent = "請先選擇點名日期，再撳「刷新」。"; return; }
+    document.getElementById("attSaveMsg").textContent = "";
+    refreshMonth(d.slice(0, 7), "讀取 " + d.slice(0, 7) + "…",
+      (ok) => { document.getElementById("attSaveMsg").textContent = ok ? "" : "⚠️ 讀取失敗，請檢查網絡再試。"; });
+  };
   document.getElementById("attSaveBtn").onclick = saveAtt;
   document.getElementById("attAllBtn").onclick = toggleAttAll;
   const clearRefMsg = () => { document.getElementById("refSaveMsg").textContent = ""; renderRefPanel(); };
   document.getElementById("refDate").onchange = clearRefMsg;
-  document.getElementById("refRefreshBtn").onclick = clearRefMsg;
+  document.getElementById("refRefreshBtn").onclick = () => {
+    const d = document.getElementById("refDate").value;
+    if (!d) { document.getElementById("refHint").innerHTML = "請先選擇退款日期，再撳「刷新」。"; return; }
+    document.getElementById("refSaveMsg").textContent = "";
+    refreshMonth(d.slice(0, 7), "讀取 " + d.slice(0, 7) + "…",
+      (ok) => { document.getElementById("refSaveMsg").textContent = ok ? "" : "⚠️ 讀取失敗，請檢查網絡再試。"; });
+  };
   document.getElementById("refAllBtn").onclick = toggleRefAll;
   document.getElementById("refSaveBtn").onclick = saveRef;
   document.getElementById("holSaveBtn").onclick = saveHoliday;
@@ -2282,8 +2346,12 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("holDate").onchange = renderHolPanel;
   document.getElementById("holRefreshBtn").onclick = refreshHolidays;
   renderHolPanel();
-  loadHolidays();       // 假期：開頁讀一次（唔會寫入）
-  loadSheet();          // 報名資料：開頁讀一次，之後一律靠手動同步
+  // 假期：上線時由下面嘅 manualSync 統一讀，唔好再並行開多一個請求
+  //（Apps Script 併發執行有限，並行讀會撞超時）。本機模式先要自己讀。
+  if (!hasBackend()) loadHolidays();
+  // 開頁（含首次）當作手動同步一次：靜默覆寫，並自動重試上次未寫入嘅項目
+  manualSync({ wait: false, silent: true, overwrite: true,
+               done: "已同步，日曆已更新。" });
   document.getElementById("gotoReceiptBtn").onclick = () => gotoReceipt(lastReceiptNo);
   renderRefPanel();
   renderAttPanel();
@@ -2296,6 +2364,11 @@ document.addEventListener("DOMContentLoaded", () => {
   hookWeekdayHeaders();
   document.getElementById("rbMonth").value = thisMonthPrefix();
   document.getElementById("rbMonth").onchange = () => { renderReceiptToolbar(); buildReceiptSheet(); };
+  document.getElementById("rbRefreshBtn").onclick = () => {
+    const ym = document.getElementById("rbMonth").value || thisMonthPrefix();
+    refreshMonth(ym, "讀取 " + ym + "…",
+      (ok) => { document.getElementById("rbCount").textContent = ok ? ym + " 已讀取" : "⚠️ 讀取失敗"; });
+  };
   document.getElementById("receiptSelect").onchange = () => buildReceiptSheet();
   document.getElementById("feeInput").onchange = () => buildReceiptSheet();
   document.getElementById("printReceiptBtn").onclick = onPrintReceipt;
@@ -2320,10 +2393,10 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("submitUnpaidBtn").onclick = () => buildResult(false);
   document.getElementById("appForm").onsubmit = (e) => { e.preventDefault(); buildResult(false); };
   document.getElementById("syncBtn").onclick = () =>
-    manualSync({ wait: true, title: "同步中…", done: "已同步，日曆已更新。" });
+    manualSync({ wait: true, overwrite: true, title: "同步中…", done: "已同步，日曆已更新。" });
   // 跳去更早月份時，用呢個掣單獨讀返該月資料
   document.getElementById("calReloadBtn").onclick = () =>
-    manualSync({ wait: true, scope: { month: activeMonthPrefix() },
+    manualSync({ wait: true, overwrite: true, scope: { month: activeMonthPrefix() },
                  title: "讀取 " + activeMonthPrefix() + "…",
                  done: "已讀取 " + activeMonthPrefix() + " 的資料，日曆已更新。" });
   document.getElementById("syncOkBtn").onclick = () => { document.getElementById("syncModal").hidden = true; };
